@@ -1,7 +1,6 @@
 // src/components/UserList.jsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableHeader,
@@ -13,6 +12,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
+import { getUsers, deleteUser } from "@/services/api";
+
 const UserList = () => {
   const [users, setUsers] = useState([]);
   const navigate = useNavigate();
@@ -23,19 +24,19 @@ const UserList = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/users');
-      setUsers(response.data);
+      const data = await getUsers();
+      setUsers(data);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/users/${id}`);
-      fetchUsers(); // Refresh the list after deletion
+      await deleteUser(id);
+      fetchUsers(); // Refresh after deletion
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
     }
   };
 
@@ -63,10 +64,16 @@ const UserList = () => {
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.role}</TableCell>
               <TableCell className="space-x-2">
-                <Button variant="destructive" onClick={() => handleEdit(user._id)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleEdit(user._id)}
+                >
                   Edit
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(user._id)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(user._id)}
+                >
                   Delete
                 </Button>
               </TableCell>

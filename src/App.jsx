@@ -1,13 +1,13 @@
 import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { LoginForm } from "./components/login-form";
+import { LoginForm } from "./components/auth/login-form";
 
 import Home from "./pages/Home"
-import ForgotPassword from "./components/ForgotPassword";
-import VerifyOTP from "./components/VerifyOTP";
-import ResetPassword from "./components/ResetPassword";
-import UserList from "./components/UserList";
-import Register from "./components/Register";
+import ForgotPassword from "./components/auth/ForgotPassword";
+import VerifyOTP from "./components/auth/VerifyOTP";
+import ResetPassword from "./components/auth/ResetPassword";
+import UserList from "./components/auth/UserList";
+import Register from "./components/auth/Register";
 
 function App() {
   return (

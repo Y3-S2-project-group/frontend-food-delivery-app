@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -7,11 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginForm({ className, ...props }) {
+import { login } from "@/services/api";
 
+export function LoginForm({ className, ...props }) {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -20,28 +20,19 @@ export function LoginForm({ className, ...props }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-  
+    setError("");
+
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/login', formData);
-      const { token, user } = response.data;
-  
-      // Store token and user info as needed, e.g., in localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-  
-      // Redirect or update UI accordingly
-      console.log('Login successful:', user);
-      navigate('/home');
+      const { token, user } = await login(formData);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      navigate("/home");
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.msg) {
-        setError(err.response.data.msg);
-      } else {
-        setError('An unexpected error occurred.');
-      }
+      setError(err.message);
     }
   };
-  
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -50,9 +41,11 @@ export function LoginForm({ className, ...props }) {
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold text-orange-500">Welcome back</h1>
+                <h1 className="text-2xl font-bold text-orange-500">
+                  Welcome back
+                </h1>
                 <p className="text-muted-foreground text-balance">
-                  Login to your <span className="text-orange-500">CroissantCourt</span>
+                  Login to your <span className="text-orange-500">Dishigo</span>
                 </p>
               </div>
               <div className="grid gap-3">
@@ -74,7 +67,12 @@ export function LoginForm({ className, ...props }) {
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" onChange={handleChange} required />
+                <Input
+                  id="password"
+                  type="password"
+                  onChange={handleChange}
+                  required
+                />
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button

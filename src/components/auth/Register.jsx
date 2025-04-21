@@ -1,25 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import axios from 'axios';
+
+import { registerUser } from "@/services/api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
+    name: "",
+    email: "",
+    password: "",
   });
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -29,14 +30,11 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // Append role as 'customer' before sending
-      const payload = { ...formData, role: 'customer' };
-      const response = await axios.post('http://localhost:8000/api/auth/register', payload);
-      setMessage(response.data.msg);
-      // Navigate to login or another page upon successful registration
-      navigate('/');
+      const data = await registerUser(formData);
+      setMessage(data.msg);
+      navigate("/");
     } catch (error) {
-      setMessage(error.response?.data?.msg || 'An error occurred');
+      setMessage(error.response?.data?.msg || "An error occurred");
     }
   };
 
@@ -93,7 +91,10 @@ const Register = () => {
           </form>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Already have an account? <a href="/login" className="underline ml-1">Login</a>
+          Already have an account?{" "}
+          <a href="/" className="underline ml-1">
+            Login
+          </a>
         </CardFooter>
       </Card>
     </div>

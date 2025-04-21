@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+
+import { resetPassword } from "@/services/api";
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleResetPassword = async (e) => {
@@ -29,19 +30,16 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/reset-password', {
-        email,
-        newPassword
-      });
+      const data = await resetPassword({ email, newPassword });
 
-      if (response.data.msg === 'Password updated successfully') {
+      if (data.msg === "Password updated successfully") {
         setMessage("Password reset successful. Redirecting to login...");
-        setTimeout(() => navigate('/'), 2000);
+        setTimeout(() => navigate("/"), 2000);
       } else {
-        setMessage(response.data.msg || 'An error occurred.');
+        setMessage(data.msg || "An error occurred.");
       }
     } catch (error) {
-      setMessage(error.response?.data?.msg || 'Server error');
+      setMessage(error.response?.data?.msg || "Server error");
     }
   };
 
@@ -93,7 +91,10 @@ const ResetPassword = () => {
           </form>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Remembered your password? <a href="/login" className="underline ml-1">Login</a>
+          Remembered your password?{" "}
+          <a href="/login" className="underline ml-1">
+            Login
+          </a>
         </CardFooter>
       </Card>
     </div>
