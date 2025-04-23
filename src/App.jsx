@@ -9,6 +9,10 @@ import ResetPassword from "./components/ResetPassword";
 import UserList from "./components/UserList";
 import Register from "./components/Register";
 
+import RestaurantForm from "./components/restaurantService/RestaurantForm";
+import RestaurantList from "./components/restaurantService/RestaurantList";
+import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
+
 function App() {
   return (
     <>
@@ -22,6 +26,10 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<UserList />} />
+
+            <Route path="/rForm" element={<RestaurantForm />} />
+            <Route path="/rList" element={<RestaurantList />} />
+            <Route path="/rVerify" element={<RestaurantVerification />} />
           </Routes>
         </main>
       </Router>
