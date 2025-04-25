@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import axios from 'axios';
+
+import { verifyOtp } from "@/services/api"; // Adjust the import path as necessary
 
 const VerifyOTP = () => {
-
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/verify-otp', { email, otp });
-      setMessage(response.data.msg);
-      // Navigate to reset password page upon successful verification
-      navigate('/reset-password', { state: { email } });
+      const data = await verifyOtp(email, otp);
+      setMessage(data.msg);
+      navigate("/reset-password", { state: { email } });
     } catch (error) {
-      setMessage(error.response?.data?.msg || 'An error occurred');
+      setMessage(error.message);
     }
   };
 
@@ -72,7 +72,10 @@ const VerifyOTP = () => {
           </form>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Didn't receive the code? <a href="/forgot-password" className="underline ml-1">Resend</a>
+          Didn't receive the code?{" "}
+          <a href="/forgot-password" className="underline ml-1">
+            Resend
+          </a>
         </CardFooter>
       </Card>
     </div>
