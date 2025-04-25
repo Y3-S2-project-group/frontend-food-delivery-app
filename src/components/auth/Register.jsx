@@ -96,6 +96,12 @@ const Register = () => {
             Login
           </a>
         </CardFooter>
+        <CardFooter className="text-sm text-muted-foreground">
+          Want to join us?{" "}
+          <a href="/" className="underline ml-1">
+            Register here
+          </a>
+        </CardFooter>
       </Card>
     </div>
   );
