@@ -27,7 +27,7 @@ const RestaurantVerification = () => {
   const fetchPendingRestaurants = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/restaurants/pending");
+      const response = await axios.get("http://localhost:8001/api/restaurants/pending");
       setPendingRestaurants(response.data);
       setError("");
       
@@ -46,7 +46,7 @@ const RestaurantVerification = () => {
   const handleVerification = async (id, status) => {
     try {
       setProcessingId(id);
-      await axios.patch(`http://localhost:5000/api/restaurants/${id}/verify`, { status });
+      await axios.patch(`http://localhost:8001/api/restaurants/${id}/verify`, { status });
       
       // Remove the restaurant from the pending list
       setPendingRestaurants((prevRestaurants) => 

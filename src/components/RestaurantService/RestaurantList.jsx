@@ -2,23 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
-  MapPin,
-  Phone,
-  Mail,
-  AlertCircle,
-  Plus,
-  Search,
-  Menu,
-  Filter,
-  ChevronDown,
-  Star,
-  Clock,
-  Users,
-  Eye,
-  Edit,
-  Save,
-  X,
+  MapPin, Phone, Mail, AlertCircle, Plus, Search, Menu, Filter, ChevronDown, Star, Clock, Users, Eye, Edit, Save, X, Clipboard, List
 } from "lucide-react";
+import MenuAddForm from "./MenuAddForm"; // Import the MenuAddForm component
 
 const RestaurantList = ({ isPending }) => {
   const [restaurants, setRestaurants] = useState([]);
@@ -28,14 +14,17 @@ const RestaurantList = ({ isPending }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
     address: {
       street: "",
       city: "",
-      latitude: "",
-      longitude: "",
+    },
+    location: {
+      type: "Point",
+      coordinates: [0, 0] // [longitude, latitude]
     },
     contactNumber: "",
     email: "",
@@ -45,15 +34,26 @@ const RestaurantList = ({ isPending }) => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       const endpoint = isPending
-        ? "http://localhost:5000/api/restaurants/pending"
-        : "http://localhost:5000/api/restaurants/";
+        ? "http://localhost:8001/api/restaurants/pending"
+        : "http://localhost:8001/api/restaurants/";
 
       try {
-        const response = await axios.get(endpoint);
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError("Authentication token not found. Please log in again.");
+          return;
+        }
+
+        const response = await axios.get(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setRestaurants(response.data);
         setError("");
       } catch (err) {
-        setError("Failed to fetch restaurants.");
+        setError("Failed to fetch restaurants: " + (err.response?.data?.message || err.message));
         console.error(err);
       } 
     };
@@ -70,8 +70,10 @@ const RestaurantList = ({ isPending }) => {
         address: {
           street: selectedRestaurant.address?.street || "",
           city: selectedRestaurant.address?.city || "",
-          latitude: selectedRestaurant.address?.latitude || "",
-          longitude: selectedRestaurant.address?.longitude || "",
+        },
+        location: {
+          type: "Point",
+          coordinates: selectedRestaurant.location?.coordinates || [0, 0],
         },
         contactNumber: selectedRestaurant.contactNumber || "",
         email: selectedRestaurant.email || "",
@@ -82,14 +84,25 @@ const RestaurantList = ({ isPending }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this restaurant?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/restaurants/${id}`);
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError("Authentication token not found. Please log in again.");
+          return;
+        }
+
+        await axios.delete(`http://localhost:8001/api/restaurants/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setRestaurants((prev) =>
           prev.filter((restaurant) => restaurant._id !== id)
         );
         setSelectedRestaurant(null);
       } catch (err) {
         console.error("Error deleting restaurant:", err);
-        alert("Failed to delete restaurant.");
+        alert("Failed to delete restaurant: " + (err.response?.data?.message || err.message));
       }
     }
   };
@@ -110,8 +123,10 @@ const RestaurantList = ({ isPending }) => {
         address: {
           street: selectedRestaurant.address?.street || "",
           city: selectedRestaurant.address?.city || "",
-          latitude: selectedRestaurant.address?.latitude || "",
-          longitude: selectedRestaurant.address?.longitude || "",
+        },
+        location: {
+          type: "Point",
+          coordinates: selectedRestaurant.location?.coordinates || [0, 0],
         },
         contactNumber: selectedRestaurant.contactNumber || "",
         email: selectedRestaurant.email || "",
@@ -119,20 +134,52 @@ const RestaurantList = ({ isPending }) => {
     }
   };
 
+  // Handle adding menu item
+  const handleAddMenuClick = () => {
+    setShowAddMenu(true);
+  };
+
+  // Handle closing the menu form
+  const handleCloseMenuForm = () => {
+    setShowAddMenu(false);
+  };
+
+  // Handle viewing menu items
+  const handleViewMenu = (restaurantId) => {
+    navigate(`/rMenuList`, { state: { restaurantId } });
+  };
+
   // Handle input change in edit form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
     if (name.includes('.')) {
-      // Handle nested address fields
+      // Handle nested fields
       const [parent, child] = name.split('.');
-      setEditForm((prev) => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value,
-        },
-      }));
+      
+      if (parent === 'location' && child === 'coordinates') {
+        // We need special handling for coordinates array
+        const [index, coordinate] = child.split('-');
+        setEditForm((prev) => {
+          const newCoordinates = [...prev.location.coordinates];
+          newCoordinates[parseInt(index)] = parseFloat(value);
+          return {
+            ...prev,
+            location: {
+              ...prev.location,
+              coordinates: newCoordinates,
+            },
+          };
+        });
+      } else {
+        setEditForm((prev) => ({
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value,
+          },
+        }));
+      }
     } else {
       // Handle top-level fields
       setEditForm((prev) => ({
@@ -147,9 +194,21 @@ const RestaurantList = ({ isPending }) => {
     e.preventDefault();
     
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError("Authentication token not found. Please log in again.");
+        return;
+      }
+
       const response = await axios.put(
-        `http://localhost:5000/api/restaurants/${selectedRestaurant._id}`,
-        editForm
+        `http://localhost:8001/api/restaurants/${selectedRestaurant._id}`,
+        editForm,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       
       // Update restaurants list with updated restaurant
@@ -208,6 +267,15 @@ const RestaurantList = ({ isPending }) => {
       default:
         return "bg-gray-500";
     }
+  };
+
+  // Helper function to extract longitude and latitude from coordinates array
+  const getLongitude = (restaurant) => {
+    return restaurant?.location?.coordinates?.[0] || 0;
+  };
+
+  const getLatitude = (restaurant) => {
+    return restaurant?.location?.coordinates?.[1] || 0;
   };
 
   if (error) {
@@ -350,8 +418,15 @@ const RestaurantList = ({ isPending }) => {
             </div>
           </div>
 
-          {/* Right side: Selected Restaurant Detail View */}
-          {selectedRestaurant ? (
+          {/* Right side: Selected Restaurant Detail View or Menu Add Form */}
+          {showAddMenu && selectedRestaurant ? (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6 lg:w-1/3">
+              <MenuAddForm 
+                restaurantId={selectedRestaurant._id} 
+                onClose={handleCloseMenuForm} 
+              />
+            </div>
+          ) : selectedRestaurant ? (
             <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6 lg:w-1/3">
               {/* Header with actions */}
               <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -454,44 +529,62 @@ const RestaurantList = ({ isPending }) => {
                           />
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              City
-                            </label>
-                            <input
-                              type="text"
-                              name="address.city"
-                              value={editForm.address.city}
-                              onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            City
+                          </label>
+                          <input
+                            type="text"
+                            name="address.city"
+                            value={editForm.address.city}
+                            onChange={handleInputChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Latitude
+                              Longitude
                             </label>
                             <input
-                              type="text"
-                              name="address.latitude"
-                              value={editForm.address.latitude}
-                              onChange={handleInputChange}
+                              type="number"
+                              step="0.000001"
+                              name="location.coordinates.0"
+                              value={editForm.location.coordinates[0]}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                setEditForm((prev) => ({
+                                  ...prev,
+                                  location: {
+                                    ...prev.location,
+                                    coordinates: [value, prev.location.coordinates[1]]
+                                  }
+                                }));
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
                           </div>
                           
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Longitude
+                              Latitude
                             </label>
                             <input
-                              type="text"
-                              name="address.longitude"
-                              value={editForm.address.longitude}
-                              onChange={handleInputChange}
+                              type="number"
+                              step="0.000001"
+                              name="location.coordinates.1"
+                              value={editForm.location.coordinates[1]}
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value);
+                                setEditForm((prev) => ({
+                                  ...prev,
+                                  location: {
+                                    ...prev.location,
+                                    coordinates: [prev.location.coordinates[0], value]
+                                  }
+                                }));
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
                           </div>
@@ -574,11 +667,11 @@ const RestaurantList = ({ isPending }) => {
                             </p>
                             <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
                               <span>
-                                Lat: {selectedRestaurant.address.latitude}
+                                Long: {getLongitude(selectedRestaurant)}
                               </span>
                               <span className="text-gray-400">|</span>
                               <span>
-                                Long: {selectedRestaurant.address.longitude}
+                                Lat: {getLatitude(selectedRestaurant)}
                               </span>
                             </div>
                           </div>
@@ -591,9 +684,10 @@ const RestaurantList = ({ isPending }) => {
 
               {/* Action buttons */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div className="flex gap-3">
-                  {!isEditing ? (
-                    <>
+                {!isEditing ? (
+                  <div>
+                    {/* Main restaurant action buttons */}
+                    <div className="flex gap-3 mb-3">
                       <button
                         onClick={handleEditClick}
                         className="bg-orange-500 text-white hover:bg-orange-600 px-4 py-2 rounded-md text-sm font-medium flex-1 flex items-center justify-center transition-colors duration-150"
@@ -608,9 +702,28 @@ const RestaurantList = ({ isPending }) => {
                       >
                         Delete
                       </button>
-                    </>
-                  ) : null}
-                </div>
+                    </div>
+                    
+                    {/* Menu action buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleAddMenuClick}
+                        className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 rounded-md text-sm font-medium flex-1 flex items-center justify-center transition-colors duration-150"
+                      >
+                        <Clipboard className="mr-2" size={16} />
+                        Add Menu
+                      </button>
+
+                      <button
+                        onClick={() => handleViewMenu(selectedRestaurant._id)}
+                        className="bg-blue-500 text-white hover:bg-blue-600 px-4 py-2 rounded-md text-sm font-medium flex-1 flex items-center justify-center transition-colors duration-150"
+                      >
+                        <List className="mr-2" size={16} />
+                        View Menu
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : (
