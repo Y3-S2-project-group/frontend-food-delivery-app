@@ -8,6 +8,10 @@ import VerifyOTP from "./components/auth/VerifyOTP";
 import ResetPassword from "./components/auth/ResetPassword";
 import UserList from "./components/auth/UserList";
 import Register from "./components/auth/Register";
+
+import RestaurantForm from "./components/restaurantService/RestaurantForm";
+import RestaurantList from "./components/restaurantService/RestaurantList";
+import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
 import Payment from "./pages/Payment/Payment";
 
 
@@ -24,6 +28,10 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin" element={<UserList />} />
+
+            <Route path="/rForm" element={<RestaurantForm />} />
+            <Route path="/rList" element={<RestaurantList />} />
+            <Route path="/rVerify" element={<RestaurantVerification />} />
             <Route path="/payment" element={<Payment />} />
           </Routes>
         </main>
