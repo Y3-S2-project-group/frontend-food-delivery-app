@@ -2,11 +2,30 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
-  MapPin, Phone, Mail, AlertCircle, Plus, Search, Menu, Filter, ChevronDown, Star, Clock, Users, Eye, Edit, Save, X, Clipboard, List
+  MapPin,
+  Phone,
+  Mail,
+  AlertCircle,
+  Plus,
+  Search,
+  Menu,
+  Filter,
+  ChevronDown,
+  Star,
+  Clock,
+  Users,
+  Eye,
+  Edit,
+  Save,
+  X,
+  Clipboard,
+  List,
 } from "lucide-react";
 import MenuAddForm from "./MenuAddForm"; // Import the MenuAddForm component
+import MenuView from "./MenuView";
 
 const RestaurantList = ({ isPending }) => {
+  const [showViewMenu, setShowViewMenu] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState(isPending ? "pending" : "all");
@@ -24,7 +43,7 @@ const RestaurantList = ({ isPending }) => {
     },
     location: {
       type: "Point",
-      coordinates: [0, 0] // [longitude, latitude]
+      coordinates: [0, 0], // [longitude, latitude]
     },
     contactNumber: "",
     email: "",
@@ -39,7 +58,7 @@ const RestaurantList = ({ isPending }) => {
 
       try {
         // Get token from localStorage
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication token not found. Please log in again.");
           return;
@@ -47,15 +66,18 @@ const RestaurantList = ({ isPending }) => {
 
         const response = await axios.get(endpoint, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         setRestaurants(response.data);
         setError("");
       } catch (err) {
-        setError("Failed to fetch restaurants: " + (err.response?.data?.message || err.message));
+        setError(
+          "Failed to fetch restaurants: " +
+            (err.response?.data?.message || err.message)
+        );
         console.error(err);
-      } 
+      }
     };
 
     fetchRestaurants();
@@ -85,7 +107,7 @@ const RestaurantList = ({ isPending }) => {
     if (window.confirm("Are you sure you want to delete this restaurant?")) {
       try {
         // Get token from localStorage
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication token not found. Please log in again.");
           return;
@@ -93,8 +115,8 @@ const RestaurantList = ({ isPending }) => {
 
         await axios.delete(`http://localhost:8001/api/restaurants/${id}`, {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         setRestaurants((prev) =>
           prev.filter((restaurant) => restaurant._id !== id)
@@ -102,7 +124,10 @@ const RestaurantList = ({ isPending }) => {
         setSelectedRestaurant(null);
       } catch (err) {
         console.error("Error deleting restaurant:", err);
-        alert("Failed to delete restaurant: " + (err.response?.data?.message || err.message));
+        alert(
+          "Failed to delete restaurant: " +
+            (err.response?.data?.message || err.message)
+        );
       }
     }
   };
@@ -144,22 +169,22 @@ const RestaurantList = ({ isPending }) => {
     setShowAddMenu(false);
   };
 
-  // Handle viewing menu items
-  const handleViewMenu = (restaurantId) => {
-    navigate(`/rMenuList`, { state: { restaurantId } });
+  // Modified handler function
+  const handleViewMenu = () => {
+    setShowViewMenu(true);
   };
 
   // Handle input change in edit form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
+
+    if (name.includes(".")) {
       // Handle nested fields
-      const [parent, child] = name.split('.');
-      
-      if (parent === 'location' && child === 'coordinates') {
+      const [parent, child] = name.split(".");
+
+      if (parent === "location" && child === "coordinates") {
         // We need special handling for coordinates array
-        const [index, coordinate] = child.split('-');
+        const [index, coordinate] = child.split("-");
         setEditForm((prev) => {
           const newCoordinates = [...prev.location.coordinates];
           newCoordinates[parseInt(index)] = parseFloat(value);
@@ -192,10 +217,10 @@ const RestaurantList = ({ isPending }) => {
   // Handle form submission for update
   const handleUpdate = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Get token from localStorage
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
         setError("Authentication token not found. Please log in again.");
         return;
@@ -206,30 +231,38 @@ const RestaurantList = ({ isPending }) => {
         editForm,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      
+
       // Update restaurants list with updated restaurant
       setRestaurants((prev) =>
         prev.map((restaurant) =>
           restaurant._id === selectedRestaurant._id ? response.data : restaurant
         )
       );
-      
+
       // Update selected restaurant with new data
       setSelectedRestaurant(response.data);
-      
+
       // Exit edit mode
       setIsEditing(false);
-      
+
       // Show success message
       alert("Restaurant updated successfully");
     } catch (err) {
       console.error("Error updating restaurant:", err);
-      alert("Failed to update restaurant: " + (err.response?.data?.message || err.message));
+      alert(
+        "Failed to update restaurant: " +
+          (err.response?.data?.message || err.message)
+      );
     }
+  };
+
+  // Add a handler to close menu view
+  const handleCloseMenuView = () => {
+    setShowViewMenu(false);
   };
 
   const filteredRestaurants = restaurants
@@ -421,9 +454,17 @@ const RestaurantList = ({ isPending }) => {
           {/* Right side: Selected Restaurant Detail View or Menu Add Form */}
           {showAddMenu && selectedRestaurant ? (
             <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6 lg:w-1/3">
-              <MenuAddForm 
-                restaurantId={selectedRestaurant._id} 
-                onClose={handleCloseMenuForm} 
+              <MenuAddForm
+                restaurantId={selectedRestaurant._id}
+                onClose={handleCloseMenuForm}
+              />
+            </div>
+          ) : showViewMenu && selectedRestaurant ? (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-6 lg:w-1/3">
+              <MenuView
+                restaurantId={selectedRestaurant._id}
+                restaurantName={selectedRestaurant.name}
+                onClose={handleCloseMenuView}
               />
             </div>
           ) : selectedRestaurant ? (
@@ -467,7 +508,7 @@ const RestaurantList = ({ isPending }) => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Description
@@ -480,7 +521,7 @@ const RestaurantList = ({ isPending }) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -495,7 +536,7 @@ const RestaurantList = ({ isPending }) => {
                           required
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Email
@@ -509,12 +550,12 @@ const RestaurantList = ({ isPending }) => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="border-t border-gray-200 pt-4">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">
                         Address Information
                       </h3>
-                      
+
                       <div className="space-y-3">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -528,7 +569,7 @@ const RestaurantList = ({ isPending }) => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             City
@@ -541,7 +582,7 @@ const RestaurantList = ({ isPending }) => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -558,14 +599,17 @@ const RestaurantList = ({ isPending }) => {
                                   ...prev,
                                   location: {
                                     ...prev.location,
-                                    coordinates: [value, prev.location.coordinates[1]]
-                                  }
+                                    coordinates: [
+                                      value,
+                                      prev.location.coordinates[1],
+                                    ],
+                                  },
                                 }));
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                             />
                           </div>
-                          
+
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Latitude
@@ -581,8 +625,11 @@ const RestaurantList = ({ isPending }) => {
                                   ...prev,
                                   location: {
                                     ...prev.location,
-                                    coordinates: [prev.location.coordinates[0], value]
-                                  }
+                                    coordinates: [
+                                      prev.location.coordinates[0],
+                                      value,
+                                    ],
+                                  },
                                 }));
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -592,7 +639,7 @@ const RestaurantList = ({ isPending }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                     <button
                       type="button"
@@ -703,7 +750,7 @@ const RestaurantList = ({ isPending }) => {
                         Delete
                       </button>
                     </div>
-                    
+
                     {/* Menu action buttons */}
                     <div className="flex gap-3">
                       <button

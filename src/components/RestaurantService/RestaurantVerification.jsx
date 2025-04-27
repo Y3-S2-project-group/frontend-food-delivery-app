@@ -9,7 +9,6 @@ import {
   MapPin,
   Eye,
   ChevronRight,
-  ChevronLeft,
   Clock,
 } from "lucide-react";
 
@@ -20,6 +19,22 @@ const RestaurantVerification = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [processingId, setProcessingId] = useState(null);
 
+  // Create axios instance with authorization header
+  const axiosAuth = axios.create();
+  
+  // Add authorization token to all requests
+  axiosAuth.interceptors.request.use(config => {
+    // Get token from localStorage or your auth state management
+    const token = localStorage.getItem('token'); // Adjust based on how you store your token
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  }, error => {
+    return Promise.reject(error);
+  });
+
   useEffect(() => {
     fetchPendingRestaurants();
   }, []);
@@ -27,7 +42,8 @@ const RestaurantVerification = () => {
   const fetchPendingRestaurants = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:8001/api/restaurants/pending");
+      // Use the axios instance with auth headers
+      const response = await axiosAuth.get("http://localhost:8001/api/restaurants/pending");
       setPendingRestaurants(response.data);
       setError("");
       
@@ -36,7 +52,13 @@ const RestaurantVerification = () => {
         setSelectedRestaurant(response.data[0]);
       }
     } catch (err) {
-      setError("Failed to fetch pending restaurant requests.");
+      if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+      } else if (err.response?.status === 403) {
+        setError("You don't have permission to access this resource.");
+      } else {
+        setError("Failed to fetch pending restaurant requests.");
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -46,7 +68,8 @@ const RestaurantVerification = () => {
   const handleVerification = async (id, status) => {
     try {
       setProcessingId(id);
-      await axios.patch(`http://localhost:8001/api/restaurants/${id}/verify`, { status });
+      // Use the axios instance with auth headers
+      await axiosAuth.patch(`http://localhost:8001/api/restaurants/${id}/verify`, { status });
       
       // Remove the restaurant from the pending list
       setPendingRestaurants((prevRestaurants) => 
@@ -61,13 +84,21 @@ const RestaurantVerification = () => {
       
       alert(`Restaurant ${status} successfully`);
     } catch (err) {
-      console.error(`Error ${status} restaurant:`, err);
-      alert(`Failed to ${status} restaurant: ${err.response?.data?.message || err.message}`);
+      if (err.response?.status === 401) {
+        setError("Authentication failed. Please login again.");
+      } else if (err.response?.status === 403) {
+        setError("You don't have permission to perform this action.");
+      } else {
+        console.error(`Error ${status} restaurant:`, err);
+        alert(`Failed to ${status} restaurant: ${err.response?.data?.message || err.message}`);
+      }
     } finally {
       setProcessingId(null);
     }
   };
 
+  // Rest of your component remains the same...
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -175,6 +206,7 @@ const RestaurantVerification = () => {
               </div>
             </div>
 
+            {/* The rest of your component remains unchanged */}
             {/* Right side: Selected Restaurant Detail View */}
             {selectedRestaurant ? (
               <div className="w-full lg:w-2/3 bg-white rounded-lg shadow-sm overflow-hidden">

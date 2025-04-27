@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { X, Save, Plus, Minus, DollarSign, Clock, Tag, FileText, Utensils } from "lucide-react";
+import { X, Save, Plus, DollarSign, Tag, FileText, Utensils } from "lucide-react";
 
 const MenuAddForm = ({ restaurantId, onClose }) => {
   const [menuItem, setMenuItem] = useState({
@@ -8,7 +8,6 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
     description: "",
     category: "",
     price: "",
-    preparationTimeInMin: "",
     isAvailable: true,
     tags: []
   });
@@ -60,8 +59,7 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
       const payload = {
         ...menuItem,
         restaurantId,
-        price: parseFloat(menuItem.price),
-        preparationTimeInMin: parseInt(menuItem.preparationTimeInMin, 10)
+        price: parseFloat(menuItem.price)
       };
 
       await axios.post(
@@ -80,7 +78,6 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
         description: "",
         category: "",
         price: "",
-        preparationTimeInMin: "",
         isAvailable: true,
         tags: []
       });
@@ -102,15 +99,15 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
   ];
 
   return (
-    <div className="p-6 space-y-5 bg-white rounded-xl shadow-lg">
+    <div className="p-6 space-y-5 bg-white rounded-xl shadow-lg border-l-4 border-orange-500">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-gray-900">Add Menu Item</h3>
+        <h3 className="text-xl font-semibold text-orange-700">Add Menu Item</h3>
         <button 
           onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-2 hover:bg-orange-50 rounded-full transition-colors"
           aria-label="Close"
         >
-          <X size={20} className="text-gray-500" />
+          <X size={20} className="text-orange-500" />
         </button>
       </div>
 
@@ -123,7 +120,7 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-orange-700 mb-1">
               Item Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -132,18 +129,18 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
                 name="name"
                 value={menuItem.name}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                className="w-full pl-10 pr-3 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                 placeholder="Enter dish name"
                 required
               />
-              <div className="absolute left-3 top-2.5 text-gray-400">
+              <div className="absolute left-3 top-2.5 text-orange-400">
                 <Utensils size={18} />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-orange-700 mb-1">
               Description
             </label>
             <div className="relative">
@@ -152,24 +149,24 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
                 value={menuItem.description}
                 onChange={handleInputChange}
                 rows="3"
-                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                className="w-full pl-10 pr-3 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                 placeholder="Describe your dish, ingredients, etc."
               />
-              <div className="absolute left-3 top-2.5 text-gray-400">
+              <div className="absolute left-3 top-2.5 text-orange-400">
                 <FileText size={18} />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-orange-700 mb-1">
               Category <span className="text-red-500">*</span>
             </label>
             <select
               name="category"
               value={menuItem.category}
               onChange={handleInputChange}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all appearance-none bg-white"
+              className="w-full px-3 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all appearance-none bg-white"
               required
             >
               <option value="">Select Category</option>
@@ -181,52 +178,30 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price ($) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name="price"
-                  value={menuItem.price}
-                  onChange={handleInputChange}
-                  step="0.01"
-                  min="0"
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                  placeholder="0.00"
-                  required
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">
-                  <DollarSign size={18} />
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Preparation Time
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name="preparationTimeInMin"
-                  value={menuItem.preparationTimeInMin}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                  placeholder="15"
-                />
-                <div className="absolute left-3 top-2.5 text-gray-400">
-                  <Clock size={18} />
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-orange-700 mb-1">
+              Price ($) <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                name="price"
+                value={menuItem.price}
+                onChange={handleInputChange}
+                step="0.01"
+                min="0"
+                className="w-full pl-10 pr-3 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                placeholder="0.00"
+                required
+              />
+              <div className="absolute left-3 top-2.5 text-orange-400">
+                <DollarSign size={18} />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-orange-700 mb-1">
               Tags
             </label>
             <div className="flex">
@@ -236,19 +211,19 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
                   value={tag}
                   onChange={(e) => setTag(e.target.value)}
                   placeholder="Add tags (e.g., spicy, vegan)"
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                  className="w-full pl-10 pr-3 py-2.5 border border-orange-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                 />
-                <div className="absolute left-3 top-2.5 text-gray-400">
+                <div className="absolute left-3 top-2.5 text-orange-400">
                   <Tag size={18} />
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="bg-gray-100 px-4 py-2.5 border border-l-0 border-gray-300 rounded-r-lg hover:bg-gray-200 transition-colors"
+                className="bg-orange-100 px-4 py-2.5 border border-l-0 border-orange-300 rounded-r-lg hover:bg-orange-200 transition-colors"
               >
-                <Plus size={18} />
+                <Plus size={18} className="text-orange-600" />
               </button>
             </div>
             
@@ -280,19 +255,19 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
               id="isAvailable"
               checked={menuItem.isAvailable}
               onChange={handleInputChange}
-              className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-orange-300 rounded"
             />
-            <label htmlFor="isAvailable" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="isAvailable" className="ml-2 block text-sm text-orange-800">
               Available for order
             </label>
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-orange-200">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors shadow-sm"
+            className="px-4 py-2 border border-orange-300 rounded-lg text-sm font-medium text-orange-700 hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors shadow-sm"
             disabled={loading}
           >
             Cancel
