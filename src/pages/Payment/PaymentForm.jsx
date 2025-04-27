@@ -16,7 +16,7 @@ const PaymentForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { data } = await axios.post('http://localhost:8005/api/payments', {
+    const { data } = await axios.post('http://localhost:3500/api/payments', {
       orderId,
       amount,
     });
