@@ -8,9 +8,13 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
   const [restaurant, setRestaurant] = useState({
     name: '',
     description: '',
-    address: { street: '', city: '', district: '', latitude: '', longitude: '' },
+    address: { 
+      street: '', 
+      city: '' 
+    },
     contactNumber: '',
     email: '',
+    coordinates: [0, 0], // [longitude, latitude] format as required by backend
   });
 
   const [locationError, setLocationError] = useState('');
@@ -30,6 +34,14 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
           [field]: value,
         },
       }));
+    } else if (name === 'longitude' || name === 'latitude') {
+      const index = name === 'longitude' ? 0 : 1;
+      const newCoordinates = [...restaurant.coordinates];
+      newCoordinates[index] = Number(value);
+      setRestaurant({
+        ...restaurant,
+        coordinates: newCoordinates
+      });
     } else {
       setRestaurant({
         ...restaurant,
@@ -50,8 +62,39 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    axios.post('http://localhost:5000/api/restaurants', restaurant)
+  
+    // Get the token from localStorage
+    const token = localStorage.getItem('token');
+  
+    // If token is missing, show error and stop submission
+    if (!token) {
+      showToast('No token found. Please log in again.', 'error');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate coordinates
+    if (!restaurant.coordinates[0] || !restaurant.coordinates[1]) {
+      showToast('Both longitude and latitude are required', 'error');
+      setIsSubmitting(false);
+      return;
+    }
+  
+    // Format data according to backend requirements
+    const restaurantData = {
+      name: restaurant.name,
+      description: restaurant.description,
+      address: restaurant.address,
+      contactNumber: restaurant.contactNumber,
+      email: restaurant.email,
+      coordinates: restaurant.coordinates // Backend expects [longitude, latitude]
+    };
+  
+    axios.post('http://localhost:8001/api/restaurants', restaurantData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
       .then(response => {
         showToast('Restaurant created successfully!', 'success');
         onRestaurantSaved();
@@ -59,9 +102,10 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
         setRestaurant({
           name: '',
           description: '',
-          address: { street: '', city: '', district: '', latitude: '', longitude: '' },
+          address: { street: '', city: '' },
           contactNumber: '',
           email: '',
+          coordinates: [0, 0],
         });
       })
       .catch(error => {
@@ -72,7 +116,7 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
         setIsSubmitting(false);
       });
   };
-
+  
   // Function to get live location
   const getLiveLocation = () => {
     if (navigator.geolocation) {
@@ -80,13 +124,10 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          // Update coordinates in the format backend expects [longitude, latitude]
           setRestaurant(prevState => ({
             ...prevState,
-            address: {
-              ...prevState.address,
-              latitude,
-              longitude,
-            },
+            coordinates: [longitude, latitude]
           }));
           setLocationError('');
           showToast('Location fetched successfully!', 'success');
@@ -214,12 +255,13 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
             <div className="col-span-3">
               <input
                 type="number"
-                name="address.longitude"
-                value={restaurant.address.longitude}
+                name="longitude"
+                value={restaurant.coordinates[0]}
                 onChange={handleChange}
                 placeholder="Restaurant longitude"
                 required
                 className="w-full p-2 border border-orange-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                step="any"
               />
             </div>
           </div>
@@ -229,12 +271,13 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
             <div className="col-span-3">
               <input
                 type="number"
-                name="address.latitude"
-                value={restaurant.address.latitude}
+                name="latitude"
+                value={restaurant.coordinates[1]}
                 onChange={handleChange}
                 placeholder="Restaurant latitude"
                 required
                 className="w-full p-2 border border-orange-200 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                step="any"
               />
             </div>
           </div>

@@ -12,6 +12,9 @@ import Register from "./components/auth/Register";
 import RestaurantForm from "./components/restaurantService/RestaurantForm";
 import RestaurantList from "./components/restaurantService/RestaurantList";
 import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
+import RestaurantMenu from "./components/RestaurantService/MenuAddForm";
+import RestaurantMenuList from "./components/RestaurantService/MenuView";
+import ShopPage from "./components/RestaurantService/ShopPage";
 
 function App() {
   return (
@@ -30,6 +33,10 @@ function App() {
             <Route path="/rForm" element={<RestaurantForm />} />
             <Route path="/rList" element={<RestaurantList />} />
             <Route path="/rVerify" element={<RestaurantVerification />} />
+            <Route path="/rMenu" element={<RestaurantMenu />} />
+            <Route path="/rMenuList" element={<RestaurantMenuList />} />
+            <Route path="/shop" element={<ShopPage />} />
+            
           </Routes>
         </main>
       </Router>
