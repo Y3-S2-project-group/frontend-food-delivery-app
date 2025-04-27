@@ -14,7 +14,9 @@ import OrderConfirmation from "./components/order/OrderConfirmation";
 import RestaurantForm from "./components/restaurantService/RestaurantForm";
 import RestaurantList from "./components/restaurantService/RestaurantList";
 import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
-
+import RestaurantMenu from "./components/RestaurantService/MenuAddForm";
+import RestaurantMenuList from "./components/RestaurantService/MenuView";
+import ShopPage from "./components/RestaurantService/ShopPage";
 
 function App() {
   return (
@@ -36,6 +38,10 @@ function App() {
 
             <Route path="/order" element={<Placeorder />} />
             <Route path="/order/confirmation/:orderId" element={<OrderConfirmation />} />
+            <Route path="/rMenu" element={<RestaurantMenu />} />
+            <Route path="/rMenuList" element={<RestaurantMenuList />} />
+            <Route path="/shop" element={<ShopPage />} />
+            
           </Routes>
         </main>
       </Router>
