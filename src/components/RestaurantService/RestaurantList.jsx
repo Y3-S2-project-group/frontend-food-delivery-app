@@ -22,7 +22,6 @@ import {
   List,
 } from "lucide-react";
 import MenuAddForm from "./MenuAddForm"; // Import the MenuAddForm component
-import MenuView from "./MenuView";
 
 const RestaurantList = ({ isPending }) => {
   const [showViewMenu, setShowViewMenu] = useState(false);
