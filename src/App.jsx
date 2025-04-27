@@ -8,10 +8,15 @@ import VerifyOTP from "./components/auth/VerifyOTP";
 import ResetPassword from "./components/auth/ResetPassword";
 import UserList from "./components/auth/UserList";
 import Register from "./components/auth/Register";
+import Placeorder from "./components/order/Placeorder";
+import OrderConfirmation from "./components/order/OrderConfirmation";
 
 import RestaurantForm from "./components/restaurantService/RestaurantForm";
 import RestaurantList from "./components/restaurantService/RestaurantList";
 import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
+import RestaurantMenu from "./components/RestaurantService/MenuAddForm";
+import RestaurantMenuList from "./components/RestaurantService/MenuView";
+import ShopPage from "./components/RestaurantService/ShopPage";
 import Payment from "./pages/Payment/Payment";
 
 // import DeliveryRegisterPage from "./pages/auth/DeliveryRegisterPage";
@@ -35,6 +40,13 @@ function App() {
             <Route path="/rForm" element={<RestaurantForm />} />
             <Route path="/rList" element={<RestaurantList />} />
             <Route path="/rVerify" element={<RestaurantVerification />} />
+
+            <Route path="/order" element={<Placeorder />} />
+            <Route path="/order/confirmation/:orderId" element={<OrderConfirmation />} />
+            <Route path="/rMenu" element={<RestaurantMenu />} />
+            <Route path="/rMenuList" element={<RestaurantMenuList />} />
+            <Route path="/shop" element={<ShopPage />} />
+            
             <Route path="/payment" element={<Payment />} />
 
             {/* Model routes for delivery and restaurant */}
