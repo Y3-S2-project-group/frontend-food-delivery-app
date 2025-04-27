@@ -336,7 +336,7 @@ export function OrderConfirmation() {
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
-              onClick={() => navigate("/orders")}
+              onClick={() => navigate("/userorders")}
             >
               My Orders
             </Button>

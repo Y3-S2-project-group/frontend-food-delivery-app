@@ -17,6 +17,7 @@ import RestaurantVerification from "./components/RestaurantService/RestaurantVer
 import RestaurantMenu from "./components/RestaurantService/MenuAddForm";
 import RestaurantMenuList from "./components/RestaurantService/MenuView";
 import ShopPage from "./components/RestaurantService/ShopPage";
+import UserOrders from "./components/order/Userorder";
 
 function App() {
   return (
@@ -41,6 +42,9 @@ function App() {
             <Route path="/rMenu" element={<RestaurantMenu />} />
             <Route path="/rMenuList" element={<RestaurantMenuList />} />
             <Route path="/shop" element={<ShopPage />} />
+
+
+            <Route path="/userorders" element={<UserOrders />} />
             
           </Routes>
         </main>
