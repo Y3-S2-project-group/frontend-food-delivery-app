@@ -72,3 +72,15 @@ export const getUsers = async () => {
 export const deleteUser = async (id) => {
   await axios.delete(`${adminAPI}/${id}`);
 };
+
+// Register Delivery Person
+export const registerDeliveryPerson = async (formData) => {
+  const response = await axios.post('http://localhost:8000/api/auth/register-delivery-person', formData);
+  return response.data;
+};
+
+// Register Restaurant Manager
+export const registerRestaurantManager = async (formData) => {
+  const response = await axios.post('http://localhost:8000/api/auth/register-restaurant-manager', formData);
+  return response.data;
+};

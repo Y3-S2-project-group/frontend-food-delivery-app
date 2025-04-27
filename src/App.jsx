@@ -14,6 +14,9 @@ import RestaurantList from "./components/restaurantService/RestaurantList";
 import RestaurantVerification from "./components/RestaurantService/RestaurantVerification";
 import Payment from "./pages/Payment/Payment";
 
+// import DeliveryRegisterPage from "./pages/auth/DeliveryRegisterPage";
+// import RestaurantRegisterPage from "./pages/auth/RestaurantRegisterPage";
+import { RegisterForm } from "./components/auth/RegisterForm";
 
 function App() {
   return (
@@ -33,6 +36,15 @@ function App() {
             <Route path="/rList" element={<RestaurantList />} />
             <Route path="/rVerify" element={<RestaurantVerification />} />
             <Route path="/payment" element={<Payment />} />
+
+            {/* Model routes for delivery and restaurant */}
+            <Route path="/delivery" element={<div>Delivery</div>} />
+            <Route path="/restaurant" element={<div>Restaurant</div>} />
+
+            <Route path="/joinus" element={<RegisterForm />} />
+            {/* <Route path="/register/delivery-person" element={<DeliveryRegisterPage />} />
+            <Route path="/register/restaurant-manager" element={<RestaurantRegisterPage />} /> */}
+
           </Routes>
         </main>
       </Router>

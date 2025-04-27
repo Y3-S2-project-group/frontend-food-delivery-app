@@ -7,7 +7,6 @@ import PaymentForm from './PaymentForm';
 function Payment() {
   return (
     <div className="App">
-      <h2>Stripe Payment</h2>
       <Elements stripe={stripePromise}>
         <PaymentForm />
       </Elements>
