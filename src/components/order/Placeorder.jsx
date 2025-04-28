@@ -7,24 +7,9 @@ import { Label } from "@/components/ui/label";
 import { placeOrder } from "@/services/orderService";
 import { Loader2, MapPin, AlertCircle } from "lucide-react";
 
-const sampleItems = [
-  { itemId: "1", name: "Margherita Pizza", price: 12.99, image: "/api/placeholder/100/100" },
-  { itemId: "2", name: "Veggie Burger", price: 9.99, image: "/api/placeholder/100/100" },
-  { itemId: "3", name: "Caesar Salad", price: 7.99, image: "/api/placeholder/100/100" },
-  { itemId: "4", name: "Garlic Bread", price: 4.99, image: "/api/placeholder/100/100" },
-  { itemId: "5", name: "Chocolate Brownie", price: 5.99, image: "/api/placeholder/100/100" },
-];
-
-const sampleRestaurants = [
-  { id: "rest1", name: "Pizzeria Italiano" },
-  { id: "rest2", name: "Burger Town" },
-  { id: "rest3", name: "Healthy Bites" },
-];
-
-export function PlaceOrderForm() {
+// PlaceOrderForm now accepts props from ShopPage
+const PlaceOrderForm = ({ selectedRestaurant, selectedItems, onCancel }) => {
   const navigate = useNavigate();
-  const [selectedItems, setSelectedItems] = useState({});
-  const [selectedRestaurant, setSelectedRestaurant] = useState("");
   const [address, setAddress] = useState({ street: "", city: "", contactNumber: "" });
   const [location, setLocation] = useState({ coordinates: [0, 0] });
   const [isLoading, setIsLoading] = useState(false);
@@ -91,47 +76,14 @@ export function PlaceOrderForm() {
       setIsLocating(false);
     };
     
-    // Options object - correctly passed as third parameter
+    // Options object
     const options = {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0
     };
     
-    // Correctly call getCurrentPosition with all three parameters
     navigator.geolocation.getCurrentPosition(successCallback, errorCallback, options);
-  };
-
-  const handleItemSelect = (itemId) => {
-    setSelectedItems(prev => {
-      const currentCount = prev[itemId] || 0;
-      
-      if (currentCount === 0) {
-        // Add the item
-        return { ...prev, [itemId]: 1 };
-      } else {
-        // Remove the item if it exists
-        const updated = { ...prev };
-        delete updated[itemId];
-        return updated;
-      }
-    });
-  };
-
-  const handleQuantityChange = (itemId, change) => {
-    setSelectedItems(prev => {
-      const currentCount = prev[itemId] || 0;
-      const newCount = Math.max(0, currentCount + change);
-      
-      if (newCount === 0) {
-        // Remove the item if quantity is 0
-        const updated = { ...prev };
-        delete updated[itemId];
-        return updated;
-      }
-      
-      return { ...prev, [itemId]: newCount };
-    });
   };
 
   const handleAddressChange = (e) => {
@@ -140,10 +92,7 @@ export function PlaceOrderForm() {
   };
 
   const calculateTotal = () => {
-    return Object.entries(selectedItems).reduce((sum, [itemId, quantity]) => {
-      const item = sampleItems.find(item => item.itemId === itemId);
-      return sum + (item ? item.price * quantity : 0);
-    }, 0);
+    return selectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
   const handleSubmit = async (e) => {
@@ -153,12 +102,12 @@ export function PlaceOrderForm() {
 
     // Validate form
     if (!selectedRestaurant) {
-      setError("Please select a restaurant");
+      setError("No restaurant selected");
       setIsLoading(false);
       return;
     }
 
-    if (Object.keys(selectedItems).length === 0) {
+    if (selectedItems.length === 0) {
       setError("Please select at least one item");
       setIsLoading(false);
       return;
@@ -172,8 +121,14 @@ export function PlaceOrderForm() {
     
     // Use current location only if enabled and successfully obtained
     const locationData = useCurrentLocation && location.coordinates[0] !== 0 && location.coordinates[1] !== 0
-      ? location
-      : { coordinates: [0, 0] }; // Default if no location
+      ? { 
+          type: "Point",
+          coordinates: location.coordinates 
+        }
+      : { 
+          type: "Point", 
+          coordinates: [0, 0] 
+        }; // Default if no location
     
     // Check if using location but failed to get it
     if (useCurrentLocation && locationData.coordinates[0] === 0 && locationData.coordinates[1] === 0) {
@@ -182,22 +137,20 @@ export function PlaceOrderForm() {
       return;
     }
 
-    // Prepare order data
-    const orderItems = Object.entries(selectedItems).map(([itemId, quantity]) => {
-      const item = sampleItems.find(item => item.itemId === itemId);
-      return {
-        itemId,
-        name: item.name,
-        quantity,
-        price: item.price
-      };
-    });
+    // Get user ID from localStorage
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+    // Prepare order data according to OrderSchema
     const orderData = {
-      restaurantId: selectedRestaurant,
-      items: orderItems,
+      customerId: user._id, // From logged in user
+      restaurantId: selectedRestaurant.id,
+      items: selectedItems,
       totalAmount: calculateTotal(),
-      customerInfo: address,
+      customerInfo: {
+        street: address.street,
+        city: address.city,
+        contactNumber: address.contactNumber
+      },
       customerLocation: locationData,
       status: "DRAFT" // Initial status
     };
@@ -215,91 +168,65 @@ export function PlaceOrderForm() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold text-orange-500 mb-6">Place Your Order</h1>
+    <div className="container mx-auto py-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-orange-500">Place Your Order</h1>
+        <button 
+          onClick={onCancel}
+          className="text-blue-500 hover:underline"
+        >
+          ← Back to shopping
+        </button>
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Restaurant Selection */}
+        {/* Restaurant Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Select Restaurant</CardTitle>
+            <CardTitle>Restaurant</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
-              {sampleRestaurants.map(restaurant => (
-                <div key={restaurant.id} className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id={`restaurant-${restaurant.id}`}
-                    name="restaurant"
-                    className="h-4 w-4 text-orange-500"
-                    checked={selectedRestaurant === restaurant.id}
-                    onChange={() => setSelectedRestaurant(restaurant.id)}
-                  />
-                  <Label htmlFor={`restaurant-${restaurant.id}`}>{restaurant.name}</Label>
-                </div>
-              ))}
-            </div>
+            {selectedRestaurant ? (
+              <div className="p-3 bg-green-50 border border-green-100 rounded-md">
+                <p className="font-bold">{selectedRestaurant.name}</p>
+              </div>
+            ) : (
+              <div className="p-3 bg-yellow-50 border border-yellow-100 rounded-md">
+                <p className="text-yellow-700">No restaurant selected</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Menu Items */}
+        {/* Selected Items */}
         <Card>
           <CardHeader>
-            <CardTitle>Select Items</CardTitle>
+            <CardTitle>Selected Items</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {sampleItems.map(item => (
-                <div key={item.itemId} className="flex justify-between items-center border-b pb-2">
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-12 h-12 rounded-md object-cover"
-                    />
+              {selectedItems.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No items selected</p>
+              ) : (
+                selectedItems.map(item => (
+                  <div key={item.itemId} className="flex justify-between items-center border-b pb-2">
                     <div>
                       <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-500">${item.price.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">${item.price.toFixed(2)} × {item.quantity}</p>
                     </div>
+                    <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {selectedItems[item.itemId] ? (
-                      <>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleQuantityChange(item.itemId, -1)}
-                          className="w-8 h-8 p-0"
-                        >
-                          -
-                        </Button>
-                        <span>{selectedItems[item.itemId]}</span>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleQuantityChange(item.itemId, 1)}
-                          className="w-8 h-8 p-0"
-                        >
-                          +
-                        </Button>
-                      </>
-                    ) : (
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleItemSelect(item.itemId)}
-                      >
-                        Add
-                      </Button>
-                    )}
+                ))
+              )}
+              
+              {selectedItems.length > 0 && (
+                <div className="border-t pt-4 mt-2">
+                  <div className="flex justify-between font-bold">
+                    <span>Total:</span>
+                    <span>${calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -343,7 +270,7 @@ export function PlaceOrderForm() {
                 />
               </div>
               
-              {/* Location Section with Enhanced UI */}
+              {/* Location Section */}
               <div className="mt-4">
                 <div className="flex items-center space-x-2 mb-2 p-2 rounded-lg bg-orange-50 border border-orange-100">
                   <input
@@ -400,35 +327,6 @@ export function PlaceOrderForm() {
           </CardContent>
         </Card>
 
-        {/* Order Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(selectedItems).map(([itemId, quantity]) => {
-                const item = sampleItems.find(item => item.itemId === itemId);
-                if (!item) return null;
-                
-                return (
-                  <div key={itemId} className="flex justify-between">
-                    <span>{item.name} × {quantity}</span>
-                    <span>${(item.price * quantity).toFixed(2)}</span>
-                  </div>
-                );
-              })}
-              
-              <div className="border-t pt-2 mt-4">
-                <div className="flex justify-between font-bold">
-                  <span>Total:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {error && (
           <div className="bg-red-100 text-red-600 p-3 rounded-md">
             {error}
@@ -439,7 +337,7 @@ export function PlaceOrderForm() {
           <Button 
             type="button" 
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={onCancel}
           >
             Cancel
           </Button>
@@ -461,6 +359,6 @@ export function PlaceOrderForm() {
       </form>
     </div>
   );
-}
+};
 
 export default PlaceOrderForm;

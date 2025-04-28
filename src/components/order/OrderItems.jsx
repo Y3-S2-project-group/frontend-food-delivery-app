@@ -3,6 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
 
 function OrderItems({ items, onQuantityChange, isDisabled, isDraft }) {
+  if (!items || items.length === 0) {
+    return (
+      <div className="space-y-2">
+        <h3 className="font-medium">Order Items</h3>
+        <div className="border rounded-md p-4 text-center text-gray-500">
+          No items in this order
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <h3 className="font-medium">Order Items</h3>
