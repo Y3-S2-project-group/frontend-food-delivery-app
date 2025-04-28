@@ -751,7 +751,7 @@ const RestaurantList = ({ isPending }) => {
                     </div>
 
                     {/* Menu action buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mb-3">
                       <button
                         onClick={handleAddMenuClick}
                         className="bg-green-500 text-white hover:bg-green-600 px-4 py-2 rounded-md text-sm font-medium flex-1 flex items-center justify-center transition-colors duration-150"
@@ -766,6 +766,20 @@ const RestaurantList = ({ isPending }) => {
                       >
                         <List className="mr-2" size={16} />
                         View Menu
+                      </button>
+                    </div>
+
+                    {/* New View Orders button */}
+                    <div>
+                      <button
+                        onClick={() => {
+                          // Navigate to orders page with restaurant ID
+                          navigate(`/orders-to-confirm/${selectedRestaurant._id}`);
+                        }}
+                        className="bg-purple-500 text-white hover:bg-purple-600 px-4 py-2 rounded-md text-sm font-medium w-full flex items-center justify-center transition-colors duration-150"
+                      >
+                        <Users className="mr-2" size={16} />
+                        View Orders
                       </button>
                     </div>
                   </div>
