@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getOrderStatus, confirmOrder, modifyOrder } from "@/services/orderService";
+import { getOrderDetails, confirmOrder, modifyOrder } from "@/services/orderService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Edit, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import OrderItems from "./OrderItems";
 import AddressSection from "./AddressSection.jsx";
 import CancellationForm from "./CancellationForm";
@@ -12,52 +12,31 @@ export function OrderConfirmation() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [orderDetails, setOrderDetails] = useState(null);
-  const [fullOrderDetails, setFullOrderDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState("");
   const [isModifying, setIsModifying] = useState(false);
-  const [items, setItems] = useState([]);
   const [showCancelForm, setShowCancelForm] = useState(false);
 
-  useEffect(() => {
-    const fetchOrderStatus = async () => {
-      try {
-        const response = await getOrderStatus(orderId);
+  const fetchOrderDetails = async () => {
+    try {
+      const response = await getOrderDetails(orderId);
+      if (response.success && response.data) {
         setOrderDetails(response.data);
-        
-        // For demonstration - in a real app, you'd fetch full order details
-        if (response.data.items) {
-          setItems(response.data.items);
-        } else {
-          // Fallback sample items if not provided by API
-          setItems([
-            { itemId: "1", name: "Margherita Pizza", quantity: 1, price: 12.99 },
-            { itemId: "4", name: "Garlic Bread", quantity: 1, price: 4.99 }
-          ]);
-        }
-        
-        setFullOrderDetails({
-          ...response.data,
-          restaurantId: "rest1",
-          restaurantName: "Pizzeria Italiano",
-          items: response.data.items || items,
-          customerInfo: response.data.customerInfo || {
-            street: "123 Main St",
-            city: "New York",
-            contactNumber: "555-123-4567"
-          }
-        });
-      } catch (err) {
-        setError("Failed to load order details");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setError(response.message || "Failed to load order details");
       }
-    };
+    } catch (err) {
+      setError("Failed to load order details");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (orderId) {
-      fetchOrderStatus();
+      fetchOrderDetails();
     }
   }, [orderId]);
 
@@ -67,14 +46,8 @@ export function OrderConfirmation() {
 
     try {
       await confirmOrder(orderId);
-      // Refresh order status
-      const response = await getOrderStatus(orderId);
-      setOrderDetails(response.data);
-      setFullOrderDetails(prev => ({
-        ...prev,
-        status: response.data.status,
-        updatedAt: response.data.updatedAt
-      }));
+      // Refresh order details
+      await fetchOrderDetails();
     } catch (err) {
       setError(err.message || "Failed to confirm order");
     } finally {
@@ -83,7 +56,10 @@ export function OrderConfirmation() {
   };
 
   const handleQuantityChange = async (itemId, change) => {
-    const updatedItems = items.map(item => {
+    if (!orderDetails || orderDetails.status !== "DRAFT") return;
+
+    // Create a copy of items for local update
+    const updatedItems = orderDetails.items.map(item => {
       if (item.itemId === itemId) {
         const newQuantity = Math.max(0, item.quantity + change);
         return { ...item, quantity: newQuantity };
@@ -92,40 +68,36 @@ export function OrderConfirmation() {
     }).filter(item => item.quantity > 0);
 
     // Update local state immediately for responsive UI
-    setItems(updatedItems);
+    setOrderDetails(prev => ({
+      ...prev,
+      items: updatedItems
+    }));
 
-    if (orderDetails?.status === "DRAFT") {
-      setIsModifying(true);
-      setError("");
+    setIsModifying(true);
+    setError("");
 
-      try {
-        // Calculate new total
-        const newTotal = updatedItems.reduce(
-          (sum, item) => sum + item.price * item.quantity, 
-          0
-        );
+    try {
+      // Calculate new total
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity, 
+        0
+      );
 
-        const updates = {
-          items: updatedItems,
-          totalAmount: newTotal
-        };
+      const updates = {
+        items: updatedItems,
+        totalAmount: newTotal
+      };
 
-        await modifyOrder(orderId, updates);
-        
-        // Update local state
-        setFullOrderDetails(prev => ({
-          ...prev,
-          items: updatedItems,
-          totalAmount: newTotal
-        }));
-
-      } catch (err) {
-        // Revert local state on error
-        setItems(items);
-        setError(err.message || "Failed to update items");
-      } finally {
-        setIsModifying(false);
-      }
+      await modifyOrder(orderId, updates);
+      
+      // Refresh order data
+      await fetchOrderDetails();
+    } catch (err) {
+      // Revert local state on error
+      setError(err.message || "Failed to update items");
+      await fetchOrderDetails(); // Refresh to get correct state
+    } finally {
+      setIsModifying(false);
     }
   };
 
@@ -140,17 +112,7 @@ export function OrderConfirmation() {
   
     try {
       await modifyOrder(orderId, { status: "CANCELLED", cancellationReason: reason });
-  
-      // Refresh status after cancelling
-      const response = await getOrderStatus(orderId);
-      setOrderDetails(response.data);
-      setFullOrderDetails(prev => ({
-        ...prev,
-        status: response.data.status,
-        cancellationReason: reason,
-        updatedAt: response.data.updatedAt
-      }));
-  
+      await fetchOrderDetails(); // Refresh order data
       setShowCancelForm(false);
     } catch (err) {
       setError(err.message || "Failed to cancel order");
@@ -170,14 +132,7 @@ export function OrderConfirmation() {
       };
 
       await modifyOrder(orderId, updates);
-      
-      // Update local state
-      setFullOrderDetails(prev => ({
-        ...prev,
-        customerInfo: updatedAddress
-      }));
-      
-      setError("");
+      await fetchOrderDetails(); // Refresh order data
       return true;
     } catch (err) {
       setError(err.message || "Failed to update address");
@@ -233,7 +188,7 @@ export function OrderConfirmation() {
                   <div>Status:</div>
                   <div>{orderDetails.status}</div>
                   <div>Restaurant:</div>
-                  <div>{fullOrderDetails?.restaurantName || "Loading..."}</div>
+                  <div>{orderDetails.restaurantName || "Not available"}</div>
                   <div>Payment Status:</div>
                   <div>{orderDetails.paymentStatus}</div>
                   <div>Created:</div>
@@ -244,18 +199,16 @@ export function OrderConfirmation() {
               </div>
               
               {/* Order Items Section */}
-              {orderDetails.status === "DRAFT" && (
-                <OrderItems 
-                  items={items}
-                  onQuantityChange={handleQuantityChange}
-                  isDisabled={isModifying}
-                  isDraft={orderDetails.status === "DRAFT"}
-                />
-              )}
+              <OrderItems 
+                items={orderDetails.items || []}
+                onQuantityChange={handleQuantityChange}
+                isDisabled={isModifying}
+                isDraft={orderDetails.status === "DRAFT"}
+              />
 
               {/* Address Section */}
               <AddressSection 
-                customerInfo={fullOrderDetails?.customerInfo}
+                customerInfo={orderDetails.customerInfo || {}}
                 isDraft={orderDetails.status === "DRAFT"}
                 isModifying={isModifying}
                 onUpdateAddress={handleAddressUpdate}
@@ -312,10 +265,10 @@ export function OrderConfirmation() {
                 </div>
               )}
               
-              {orderDetails.status === "CANCELLED" && fullOrderDetails?.cancellationReason && (
+              {orderDetails.status === "CANCELLED" && orderDetails.cancellationReason && (
                 <div className="bg-red-50 p-4 rounded-md">
                   <p className="text-red-800">
-                    <strong>Cancellation reason:</strong> {fullOrderDetails.cancellationReason}
+                    <strong>Cancellation reason:</strong> {orderDetails.cancellationReason}
                   </p>
                 </div>
               )}
@@ -336,7 +289,7 @@ export function OrderConfirmation() {
           <div className="flex justify-between mt-6">
             <Button
               variant="outline"
-              onClick={() => navigate("/orders")}
+              onClick={() => navigate("/userorders")}
             >
               My Orders
             </Button>

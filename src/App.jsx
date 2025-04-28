@@ -22,6 +22,12 @@ import Payment from "./pages/Payment/Payment";
 // import DeliveryRegisterPage from "./pages/auth/DeliveryRegisterPage";
 // import RestaurantRegisterPage from "./pages/auth/RestaurantRegisterPage";
 import { RegisterForm } from "./components/auth/RegisterForm";
+import UserOrders from "./components/order/Userorder";
+
+
+import OrderDetailsPage from "./components/order/OrderDetailsPage";
+import OrdersToConfirm from "./components/order/OrdersToConfirm";
+
 
 function App() {
   return (
@@ -56,6 +62,13 @@ function App() {
             <Route path="/joinus" element={<RegisterForm />} />
             {/* <Route path="/register/delivery-person" element={<DeliveryRegisterPage />} />
             <Route path="/register/restaurant-manager" element={<RestaurantRegisterPage />} /> */}
+            <Route path="/orders-to-confirm/:restaurantId" element={<OrdersToConfirm />} />
+
+
+            <Route path="/userorders" element={<UserOrders />} />
+
+            
+            <Route path="/order/:orderId" element={<OrderDetailsPage />} />
 
           </Routes>
         </main>

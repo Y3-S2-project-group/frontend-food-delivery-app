@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShoppingCart, Search, Star, X, Plus, Minus, AlertTriangle } from 'lucide-react';
+import PlaceOrderForm from '../order/Placeorder.jsx';
 
 const ShopPage = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -8,8 +9,8 @@ const ShopPage = () => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [filteredMenuItems, setFilteredMenuItems] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState({}); // Track selected items for order
+  const [isOrderFormOpen, setIsOrderFormOpen] = useState(false); // Control order form visibility
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchingMenu, setIsSearchingMenu] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,10 +22,6 @@ const ShopPage = () => {
   
   // Available cuisines for filter
   const [availableCuisines, setAvailableCuisines] = useState([]);
-  
-  // For restaurant selection in cart
-  const [selectedCartRestaurant, setSelectedCartRestaurant] = useState(null);
-  const [showRestaurantWarning, setShowRestaurantWarning] = useState(false);
 
   // Fixed arrays of images that work reliably for academic purposes
   const restaurantImages = [
@@ -175,112 +172,69 @@ const ShopPage = () => {
     setSearchTerm('');
   };
 
-  // Group cart items by restaurant
-  const getGroupedCartItems = () => {
-    return cart.reduce((acc, item) => {
-      if (!acc[item.restaurantId]) {
-        acc[item.restaurantId] = {
-          id: item.restaurantId,
-          name: item.restaurantName,
-          items: [],
-          subtotal: 0
+  // Handle menu item selection for ordering
+  const handleItemSelect = (item) => {
+    setSelectedItems(prev => {
+      const itemId = item._id;
+      const currentCount = prev[itemId]?.quantity || 0;
+      
+      if (currentCount === 0) {
+        // Add the item
+        return {
+          ...prev,
+          [itemId]: {
+            itemId: itemId,
+            name: item.name,
+            quantity: 1,
+            price: item.price
+          }
         };
+      } else {
+        // Remove the item if it exists
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
       }
-      acc[item.restaurantId].items.push(item);
-      acc[item.restaurantId].subtotal += item.price * item.quantity;
-      return acc;
-    }, {});
+    });
   };
 
-  // Add item to cart with Uber Eats-like behavior
-  const addToCart = (menuItem) => {
-    const restaurantInfo = selectedRestaurant ? {
-      restaurantId: selectedRestaurant._id,
-      restaurantName: selectedRestaurant.name
-    } : {
-      restaurantId: menuItem.restaurantId,
-      restaurantName: menuItem.restaurantName || "Unknown Restaurant"
-    };
-    
-    // Get unique restaurants in current cart
-    const cartRestaurants = [...new Set(cart.map(item => item.restaurantId))];
-    
-    // If cart has items from other restaurants, show warning
-    if (cartRestaurants.length > 0 && !cartRestaurants.includes(restaurantInfo.restaurantId)) {
-      setShowRestaurantWarning(true);
-      setSelectedCartRestaurant({
-        id: restaurantInfo.restaurantId,
-        name: restaurantInfo.restaurantName,
-        item: menuItem
-      });
-      setIsCartOpen(true);
-      return;
-    }
-    
-    // Check if item already exists in cart
-    const existingItemIndex = cart.findIndex(item => item._id === menuItem._id);
-    
-    if (existingItemIndex !== -1) {
-      // If item exists, update quantity
-      const updatedCart = [...cart];
-      updatedCart[existingItemIndex].quantity += 1;
-      setCart(updatedCart);
-    } else {
-      // If item doesn't exist, add it with quantity 1
-      setCart([...cart, { 
-        ...menuItem, 
-        quantity: 1, 
-        restaurantId: restaurantInfo.restaurantId,
-        restaurantName: restaurantInfo.restaurantName 
-      }]);
-    }
-    
-    // Show the cart when adding an item
-    setIsCartOpen(true);
-  };
-
-  // Switch restaurants in cart (like Uber Eats)
-  const switchRestaurant = () => {
-    if (!selectedCartRestaurant) return;
-    
-    // Clear existing cart and add the new item
-    setCart([{ 
-      ...selectedCartRestaurant.item, 
-      quantity: 1, 
-      restaurantId: selectedCartRestaurant.id,
-      restaurantName: selectedCartRestaurant.name 
-    }]);
-    
-    setShowRestaurantWarning(false);
-    setSelectedCartRestaurant(null);
-  };
-
-  // Update cart item quantity
-  const updateCartItemQuantity = (itemId, change) => {
-    const updatedCart = cart.map(item => {
-      if (item._id === itemId) {
-        const newQuantity = item.quantity + change;
-        return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+  // Update item quantity
+  const updateItemQuantity = (itemId, change) => {
+    setSelectedItems(prev => {
+      if (!prev[itemId]) return prev;
+      
+      const updatedItem = { ...prev[itemId] };
+      updatedItem.quantity = Math.max(0, updatedItem.quantity + change);
+      
+      if (updatedItem.quantity === 0) {
+        // Remove the item if quantity is 0
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
       }
-      return item;
-    }).filter(Boolean);
-    
-    setCart(updatedCart);
+      
+      return { ...prev, [itemId]: updatedItem };
+    });
   };
 
-  // Remove item from cart
-  const removeFromCart = (itemId) => {
-    setCart(cart.filter(item => item._id !== itemId));
+  // Calculate total items selected
+  const getTotalItemsCount = () => {
+    return Object.values(selectedItems).reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  // Calculate cart total
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  // Open order form
+  const openOrderForm = () => {
+    if (getTotalItemsCount() > 0) {
+      setIsOrderFormOpen(true);
+    }
+  };
 
   // Handle restaurant selection
   const handleRestaurantSelect = (restaurant) => {
     setSelectedRestaurant(restaurant);
     setSearchTerm('');
     setPriceFilter('all'); // Reset price filter when selecting new restaurant
+    setSelectedItems({}); // Clear selected items when changing restaurants
   };
 
   // Navigate back to restaurant list
@@ -288,145 +242,12 @@ const ShopPage = () => {
     setSelectedRestaurant(null);
     setMenuItems([]);
     setFilteredMenuItems([]);
-  };
-
-  // Cart Item Component
-  const CartItem = ({ item }) => (
-    <div className="flex items-center justify-between py-2 border-b">
-      <div className="flex-1">
-        <div className="font-medium">{item.name}</div>
-        <div className="text-sm text-gray-500">${item.price.toFixed(2)}</div>
-      </div>
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => updateCartItemQuantity(item._id, -1)}
-          className="p-1 rounded-full hover:bg-gray-100"
-        >
-          <Minus size={16} />
-        </button>
-        <span className="w-6 text-center">{item.quantity}</span>
-        <button 
-          onClick={() => updateCartItemQuantity(item._id, 1)}
-          className="p-1 rounded-full hover:bg-gray-100"
-        >
-          <Plus size={16} />
-        </button>
-        <button 
-          onClick={() => removeFromCart(item._id)}
-          className="ml-2 p-1 text-red-500 hover:bg-red-50 rounded-full"
-        >
-          <X size={16} />
-        </button>
-      </div>
-    </div>
-  );
-
-  // Cart Popup Component
-  const CartPopup = () => {
-    const groupedItems = getGroupedCartItems();
-    return (
-      <div className="fixed top-24 right-4 w-96 bg-white shadow-2xl rounded-lg z-50 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b bg-amber-50">
-          <h2 className="text-lg font-bold">Your Cart</h2>
-          <button 
-            onClick={() => setIsCartOpen(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        
-        {/* Restaurant warning */}
-        {showRestaurantWarning && (
-          <div className="p-4 bg-yellow-50 border-b border-yellow-100">
-            <div className="flex items-start">
-              <AlertTriangle className="text-yellow-500 mr-2 mt-1 flex-shrink-0" size={20} />
-              <div>
-                <h3 className="font-medium">Start a new order?</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Your cart already has items from {cart.length > 0 ? cart[0].restaurantName : 'another restaurant'}. 
-                  Do you want to clear your cart and add items from {selectedCartRestaurant?.name}?
-                </p>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={switchRestaurant} 
-                    className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600"
-                  >
-                    New Order
-                  </button>
-                  <button 
-                    onClick={() => setShowRestaurantWarning(false)} 
-                    className="px-3 py-1 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300"
-                  >
-                    Keep Current
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div className="max-h-96 overflow-y-auto p-4">
-          {cart.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              Your cart is empty
-            </div>
-          ) : (
-            <div>
-              {/* Group items by restaurant in Uber Eats style */}
-              {Object.values(groupedItems).map((restaurant) => (
-                <div key={restaurant.id} className="mb-6">
-                  <div className="bg-gray-50 p-3 rounded-md mb-3">
-                    <h3 className="font-bold text-gray-800">{restaurant.name}</h3>
-                    <div className="text-sm text-gray-500">Subtotal: ${restaurant.subtotal.toFixed(2)}</div>
-                  </div>
-                  <div className="space-y-1">
-                    {restaurant.items.map(item => (
-                      <CartItem key={item._id} item={item} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div className="p-4 border-t bg-gray-50">
-          <div className="flex justify-between py-2">
-            <span className="font-medium">Subtotal:</span>
-            <span>${cartTotal.toFixed(2)}</span>
-          </div>
-          {cart.length > 0 && (
-            <>
-              <div className="flex justify-between py-2">
-                <span className="font-medium">Delivery fee:</span>
-                <span>$3.99</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="font-medium">Service fee:</span>
-                <span>$1.99</span>
-              </div>
-            </>
-          )}
-          <div className="flex justify-between py-2 font-bold text-lg border-t mt-2 pt-3">
-            <span>Total:</span>
-            <span>${cart.length > 0 ? (cartTotal + 3.99 + 1.99).toFixed(2) : (0).toFixed(2)}</span>
-          </div>
-          
-          <button 
-            className={`w-full py-3 rounded-md text-white font-medium mt-2 ${cart.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
-            disabled={cart.length === 0}
-          >
-            Proceed to Checkout
-          </button>
-        </div>
-      </div>
-    );
+    setSelectedItems({});
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Search bar and cart toggle */}
+      {/* Search bar and order button */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1">
           <input
@@ -459,21 +280,19 @@ const ShopPage = () => {
           </button>
         </div>
         <button 
-          onClick={() => setIsCartOpen(!isCartOpen)}
+          onClick={openOrderForm}
           className="relative flex items-center gap-1 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
+          disabled={getTotalItemsCount() === 0}
         >
           <ShoppingCart size={20} />
-          <span>{cart.reduce((sum, item) => sum + item.quantity, 0)}</span>
-          {cart.length > 0 && (
+          <span>Place Order</span>
+          {getTotalItemsCount() > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-xs">
-              {cart.length}
+              {getTotalItemsCount()}
             </span>
           )}
         </button>
       </div>
-
-      {/* Cart popup without overlay */}
-      {isCartOpen && <CartPopup />}
 
       {/* Simple filtering options based on context */}
       {!selectedRestaurant ? (
@@ -535,103 +354,133 @@ const ShopPage = () => {
         )
       )}
 
-      {/* Page content */}
-      <div className="min-h-screen">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : error ? (
-          <div className="text-red-500 text-center py-8">{error}</div>
-        ) : selectedRestaurant ? (
-          /* Restaurant menu view */
-          <div>
-            <div className="flex items-center mb-6">
-              <button 
-                onClick={backToRestaurants}
-                className="mr-4 text-blue-500 hover:underline"
-              >
-                ← Back to restaurants
-              </button>
-              <h1 className="text-xl font-bold">{selectedRestaurant.name}</h1>
+      {/* Conditionally render PlaceOrderForm */}
+      {isOrderFormOpen ? (
+        <PlaceOrderForm 
+          selectedRestaurant={selectedRestaurant ? 
+            { id: selectedRestaurant._id, name: selectedRestaurant.name } : null}
+          selectedItems={Object.values(selectedItems)}
+          onCancel={() => setIsOrderFormOpen(false)}
+        />
+      ) : (
+        /* Page content */
+        <div className="min-h-screen">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
+          ) : error ? (
+            <div className="text-red-500 text-center py-8">{error}</div>
+          ) : selectedRestaurant ? (
+            /* Restaurant menu view */
+            <div>
+              <div className="flex items-center mb-6">
+                <button 
+                  onClick={backToRestaurants}
+                  className="mr-4 text-blue-500 hover:underline"
+                >
+                  ← Back to restaurants
+                </button>
+                <h1 className="text-xl font-bold">{selectedRestaurant.name}</h1>
+              </div>
 
-            {filteredMenuItems.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">
-                {menuItems.length === 0 ? "No menu items available" : "No items match your filters"}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMenuItems.map((item, index) => (
-                  <div key={item._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <div className="h-48 bg-gray-200">
-                      <img 
-                        src={foodImages[index % foodImages.length]} 
-                        alt={item.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg">{item.name}</h3>
-                      <p className="text-gray-600 text-sm mb-2">{item.description}</p>
-                      <div className="flex justify-between items-center mt-4">
-                        <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
-                        <button 
-                          onClick={() => addToCart(item)}
-                          className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm"
-                        >
-                          Add to Cart
-                        </button>
+              {filteredMenuItems.length === 0 ? (
+                <p className="text-center py-8 text-gray-500">
+                  {menuItems.length === 0 ? "No menu items available" : "No items match your filters"}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMenuItems.map((item, index) => (
+                    <div key={item._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                      <div className="h-48 bg-gray-200">
+                        <img 
+                          src={foodImages[index % foodImages.length]} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg">{item.name}</h3>
+                        <p className="text-gray-600 text-sm mb-2">{item.description}</p>
+                        <div className="flex justify-between items-center mt-4">
+                          <span className="font-bold text-lg">${item.price.toFixed(2)}</span>
+                          
+                          {/* Item selection controls */}
+                          {selectedItems[item._id] ? (
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => updateItemQuantity(item._id, -1)}
+                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span>{selectedItems[item._id].quantity}</span>
+                              <button 
+                                onClick={() => updateItemQuantity(item._id, 1)}
+                                className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={() => handleItemSelect(item)}
+                              className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm"
+                            >
+                              Add to Order
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Restaurant list view */
-          <div>
-            <h1 className="text-2xl font-bold mb-6">Restaurants</h1>
-            {filteredRestaurants.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">No restaurants found</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredRestaurants.map((restaurant, index) => (
-                  <div 
-                    key={restaurant._id} 
-                    className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleRestaurantSelect(restaurant)}
-                  >
-                    <div className="h-40 bg-gray-200">
-                      <img 
-                        src={restaurantImages[index % restaurantImages.length]} 
-                        alt={restaurant.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h2 className="font-bold text-lg">{restaurant.name}</h2>
-                      <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <span className="flex items-center">
-                          <Star size={14} className="fill-yellow-400 text-yellow-400 mr-1" />
-                          {restaurant.rating || 'New'}
-                        </span>
-                        <span className="mx-2">•</span>
-                        <span>{restaurant.cuisine}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Restaurant list view */
+            <div>
+              <h1 className="text-2xl font-bold mb-6">Restaurants</h1>
+              {filteredRestaurants.length === 0 ? (
+                <p className="text-center py-8 text-gray-500">No restaurants found</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredRestaurants.map((restaurant, index) => (
+                    <div 
+                      key={restaurant._id} 
+                      className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleRestaurantSelect(restaurant)}
+                    >
+                      <div className="h-40 bg-gray-200">
+                        <img 
+                          src={restaurantImages[index % restaurantImages.length]} 
+                          alt={restaurant.name} 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-sm text-black-500 font-semibold">{restaurant.address?.city}</span>
-                        <button className="text-blue-500 text-m font-semibold hover:underline">View Menu</button>
+                      <div className="p-4">
+                        <h2 className="font-bold text-lg">{restaurant.name}</h2>
+                        <div className="flex items-center text-sm text-gray-600 mb-2">
+                          <span className="flex items-center">
+                            <Star size={14} className="fill-yellow-400 text-yellow-400 mr-1" />
+                            {restaurant.rating || 'New'}
+                          </span>
+                          <span className="mx-2">•</span>
+                          <span>{restaurant.cuisine}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-sm text-black-500 font-semibold">{restaurant.address?.city}</span>
+                          <button className="text-blue-500 text-m font-semibold hover:underline">View Menu</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
