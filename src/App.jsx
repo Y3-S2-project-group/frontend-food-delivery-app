@@ -19,6 +19,10 @@ import RestaurantMenuList from "./components/RestaurantService/MenuView";
 import ShopPage from "./components/RestaurantService/ShopPage";
 import UserOrders from "./components/order/Userorder";
 
+
+import OrderDetailsPage from "./components/order/OrderDetailsPage";
+
+
 function App() {
   return (
     <>
@@ -45,6 +49,9 @@ function App() {
 
 
             <Route path="/userorders" element={<UserOrders />} />
+
+            
+            <Route path="/order/:orderId" element={<OrderDetailsPage />} />
             
           </Routes>
         </main>

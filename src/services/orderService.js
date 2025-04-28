@@ -29,6 +29,23 @@ export const placeOrder = async (orderData) => {
   }
 };
 
+
+
+// 2. Get complete order details - new implementation
+export const getOrderDetails = async (orderId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/orders/${orderId}`, 
+      getAuthHeader()
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch order details');
+  }
+};
+
+
 // 2. Modify an order (only if status is DRAFT)
 export const modifyOrder = async (orderId, updates) => {
   try {
