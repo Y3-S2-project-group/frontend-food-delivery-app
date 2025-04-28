@@ -21,6 +21,7 @@ import UserOrders from "./components/order/Userorder";
 
 
 import OrderDetailsPage from "./components/order/OrderDetailsPage";
+import OrdersToConfirm from "./components/order/OrdersToConfirm";
 
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/rMenu" element={<RestaurantMenu />} />
             <Route path="/rMenuList" element={<RestaurantMenuList />} />
             <Route path="/shop" element={<ShopPage />} />
+            <Route path="/orders-to-confirm/:restaurantId" element={<OrdersToConfirm />} />
 
 
             <Route path="/userorders" element={<UserOrders />} />
