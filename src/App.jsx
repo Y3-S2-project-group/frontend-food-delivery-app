@@ -22,6 +22,8 @@ import UserOrders from "./components/order/Userorder";
 
 import OrderDetailsPage from "./components/order/OrderDetailsPage";
 import OrdersToConfirm from "./components/order/OrdersToConfirm";
+import DriverAssignmentPage from "./components/DeliveryService/DriverAssignmentPage";
+import DriverDashboard from "./components/DeliveryService/DriverDashboard";
 
 
 function App() {
@@ -48,8 +50,8 @@ function App() {
             <Route path="/rMenuList" element={<RestaurantMenuList />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/orders-to-confirm/:restaurantId" element={<OrdersToConfirm />} />
-
-
+            <Route path="/driver-assignment/:restaurantId" element={<DriverAssignmentPage />} />
+            <Route path="/driver/deliveries" element={<DriverDashboard />} />
             <Route path="/userorders" element={<UserOrders />} />
 
             
