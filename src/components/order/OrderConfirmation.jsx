@@ -7,6 +7,8 @@ import { Loader2, AlertCircle } from "lucide-react";
 import OrderItems from "./OrderItems";
 import AddressSection from "./AddressSection.jsx";
 import CancellationForm from "./CancellationForm";
+import { getDeliveryForOrder, getDriverLocation } from "@/services/delivery-service";
+import DeliveryMap from "../DeliveryService/components/DeliveryMap";
 
 export function OrderConfirmation() {
   const { orderId } = useParams();
@@ -17,6 +19,9 @@ export function OrderConfirmation() {
   const [error, setError] = useState("");
   const [isModifying, setIsModifying] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
+  const [deliveryDetails, setDeliveryDetails] = useState(null);
+  const [driverLocation, setDriverLocation] = useState(null);
+  const [isLoadingDelivery, setIsLoadingDelivery] = useState(false);
 
   const fetchOrderDetails = async () => {
     try {
@@ -33,6 +38,45 @@ export function OrderConfirmation() {
       setIsLoading(false);
     }
   };
+
+  const fetchDeliveryDetails = async () => {
+    
+    setIsLoadingDelivery(true);
+    try {
+      const response = await getDeliveryForOrder(orderId);
+      if (response.success && response.data) {
+        setDeliveryDetails(response.data.data);
+        
+        // If driver is assigned, fetch driver location
+        if (response.data.data.driverId) {
+          await fetchDriverLocation(response.data.data.driverId);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch delivery details", err);
+    } finally {
+      setIsLoadingDelivery(false);
+    }
+  };
+
+  const fetchDriverLocation = async (driverId) => {
+    try {
+      const response = await getDriverLocation(driverId);
+      
+      if (response.success && response.data.data) {
+        setDriverLocation(response.data.data.location);
+      }
+    } catch (err) {
+      console.error("Failed to fetch driver location", err);
+    }
+  };
+
+  // Fetch delivery details when the order is confirmed
+  useEffect(() => {
+    if (orderDetails?.status === "READY_FOR_DELIVERY") {
+      fetchDeliveryDetails();
+    }
+  }, [orderDetails?.status]);
 
   useEffect(() => {
     if (orderId) {
@@ -264,6 +308,47 @@ export function OrderConfirmation() {
                   </p>
                 </div>
               )}
+
+              {/* Delivery tracking section */}
+
+              <div className="space-y-4 mt-6">
+                    <h3 className="font-medium text-lg">Delivery Tracking</h3>
+                    
+                    {isLoadingDelivery ? (
+                      <div className="flex justify-center items-center h-40">
+                        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+                      </div>
+                    ) : deliveryDetails ? (
+                      <>
+                        <div className="bg-blue-50 p-4 rounded-md mb-4">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>Delivery Status:</div>
+                            <div className="font-medium">{deliveryDetails.status}</div>
+                            
+                            {deliveryDetails.driverName && (
+                              <>
+                                <div>Driver:</div>
+                                <div className="font-medium">{deliveryDetails.driverName}</div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {orderDetails?.customerLocation?.coordinates && driverLocation && (
+                          <DeliveryMap 
+                            customerLocation={[orderDetails?.customerLocation?.coordinates[1], orderDetails?.customerLocation?.coordinates[0]]}
+                            driverLocation={driverLocation}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div className="bg-yellow-50 p-4 rounded-md">
+                        <p className="text-yellow-800">
+                          Waiting for a driver to be assigned to your order.
+                        </p>
+                      </div>
+                    )}
+                  </div>
               
               {orderDetails.status === "CANCELLED" && orderDetails.cancellationReason && (
                 <div className="bg-red-50 p-4 rounded-md">

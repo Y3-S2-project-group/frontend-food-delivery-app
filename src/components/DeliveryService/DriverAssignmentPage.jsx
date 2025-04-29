@@ -88,7 +88,7 @@ const DriverAssignmentPage = () => {
         const response = await axios.post('http://localhost:5078/api/deliveries/assign', payload);
         console.log('Delivery created:', response.data);
 
-        const data = await updatePlacedOrder(order._id, 'SHIPPED');
+        // const data = await updatePlacedOrder(order._id, 'SHIPPED');
 
       alert(`Driver has been assigned to the order.`);
       // Navigate back to orders page
