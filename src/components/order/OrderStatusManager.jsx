@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { updateOrderStatus, updatePlacedOrder } from '@/services/orderService'; // Adjust the import path as necessary
+import { useNavigate } from 'react-router-dom';
+import ReadyForDeliveryActions from '../DeliveryService/ReadyForDeliveryActions';
 
 // Component for updating orders from CONFIRMED status
 const ConfirmedOrderActions = ({ order, onStatusUpdate }) => {
@@ -76,6 +78,7 @@ const ConfirmedOrderActions = ({ order, onStatusUpdate }) => {
 const PlacedOrderActions = ({ order, onStatusUpdate }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const getNextStatus = () => {
     if (order.status === 'PLACED') return 'PREPARING';
@@ -143,6 +146,10 @@ const OrderStatusManager = ({ order, onStatusUpdate }) => {
           order={order} 
           onStatusUpdate={onStatusUpdate} 
         />
+      )}
+
+      {order.status === 'READY_FOR_DELIVERY' && (
+        <ReadyForDeliveryActions order={order} />
       )}
       
       <div className="bg-gray-100 rounded-lg p-4">

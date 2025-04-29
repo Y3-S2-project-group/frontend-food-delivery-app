@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShoppingCart, Search, Star, X, Plus, Minus, AlertTriangle } from 'lucide-react';
 import PlaceOrderForm from '../order/Placeorder.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const ShopPage = () => {
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
@@ -19,7 +21,10 @@ const ShopPage = () => {
   // Simple filter states integrated into main UI
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
-  
+
+  const goToMyOrders = () => {
+    navigate('/userorders');
+  };
   // Available cuisines for filter
   const [availableCuisines, setAvailableCuisines] = useState([]);
 
@@ -279,6 +284,12 @@ const ShopPage = () => {
             Menu Items
           </button>
         </div>
+        <button 
+          onClick={goToMyOrders}
+          className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          My Orders
+        </button>
         <button 
           onClick={openOrderForm}
           className="relative flex items-center gap-1 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
