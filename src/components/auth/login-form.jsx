@@ -21,18 +21,27 @@ export function LoginForm({ className, ...props }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
+  
     try {
       const { token, user } = await login(formData);
-
+  
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-
-      navigate("/home");
+  
+      if (user.role === "restaurant") {
+        navigate("/rList");
+      } else if (user.role === "customer") {
+        navigate("/shop");
+      } else if (user.role === "admin") {
+        navigate("/rVerify");
+      } else {
+        navigate("/shop"); 
+      }
     } catch (err) {
       setError(err.message);
     }
   };
+  
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
