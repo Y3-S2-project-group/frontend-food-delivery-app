@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Clock,
 } from "lucide-react";
+import LogoutButton from "../LogoutButton";
 
 const RestaurantVerification = () => {
   const [pendingRestaurants, setPendingRestaurants] = useState([]);
@@ -43,7 +44,7 @@ const RestaurantVerification = () => {
     try {
       setLoading(true);
       // Use the axios instance with auth headers
-      const response = await axiosAuth.get("http://localhost:8001/api/restaurants/pending");
+      const response = await axiosAuth.get("http://localhost:8000/api/restaurants/pending");
       setPendingRestaurants(response.data);
       setError("");
       
@@ -69,7 +70,7 @@ const RestaurantVerification = () => {
     try {
       setProcessingId(id);
       // Use the axios instance with auth headers
-      await axiosAuth.patch(`http://localhost:8001/api/restaurants/${id}/verify`, { status });
+      await axiosAuth.patch(`http://localhost:8000/api/restaurants/${id}/verify`, { status });
       
       // Remove the restaurant from the pending list
       setPendingRestaurants((prevRestaurants) => 
@@ -139,6 +140,7 @@ const RestaurantVerification = () => {
             Review and verify restaurant registration requests
           </p>
         </div>
+        <LogoutButton />
 
         {pendingRestaurants.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-10 text-center">

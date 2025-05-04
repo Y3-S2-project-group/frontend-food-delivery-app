@@ -44,8 +44,13 @@ const DriverAssignmentPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token');
         // Fetch restaurant details
-        const restaurantResponse = await axios.get(`http://localhost:8001/api/restaurants/${restaurantId}`);
+        const restaurantResponse = await axios.get(`http://localhost:8000/api/restaurants/${restaurantId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         const restaurantData = restaurantResponse.data;
 
         setRestaurant(restaurantData);
@@ -61,7 +66,12 @@ const DriverAssignmentPage = () => {
 
         // Fetch nearest drivers
         const driversResponse = await axios.get(
-          `http://localhost:8000/api/users/drivers/nearest?longitude=${longitude}&latitude=${latitude}`
+          `http://localhost:8000/api/users/drivers/nearest?longitude=${longitude}&latitude=${latitude}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
         
         setDrivers(driversResponse.data.data);
@@ -85,7 +95,14 @@ const DriverAssignmentPage = () => {
         };
         console.log('Payload for driver assignment:', payload);
 
-        const response = await axios.post('http://localhost:5078/api/deliveries/assign', payload);
+        const token = localStorage.getItem('token');
+
+        const response = await axios.post('http://localhost:8000/api/deliveries/assign', payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
         console.log('Delivery created:', response.data);
 
         // const data = await updatePlacedOrder(order._id, 'SHIPPED');

@@ -90,7 +90,7 @@ const RestaurantForm = ({ onRestaurantSaved = () => {} }) => {
       coordinates: restaurant.coordinates // Backend expects [longitude, latitude]
     };
   
-    axios.post('http://localhost:8001/api/restaurants', restaurantData, {
+    axios.post('http://localhost:8000/api/restaurants', restaurantData, {
       headers: {
         Authorization: `Bearer ${token}`
       }

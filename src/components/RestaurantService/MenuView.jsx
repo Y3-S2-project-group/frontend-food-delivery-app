@@ -51,7 +51,7 @@ const MenuView = ({ restaurantId, restaurantName, onClose }) => {
         setLoading(false);
         return;
       }
-      const res = await axios.get(`http://localhost:8001/api/menus/restaurant/${restaurantId}`, {
+      const res = await axios.get(`http://localhost:8000/api/menus/restaurant/${restaurantId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMenuItems(res.data);
@@ -120,7 +120,7 @@ const MenuView = ({ restaurantId, restaurantName, onClose }) => {
         ...editForm,
         price: parseFloat(editForm.price),
       };
-      const res = await axios.put(`http://localhost:8001/api/menus/${editingItem._id}`, payload, {
+      const res = await axios.put(`http://localhost:8000/api/menus/${editingItem._id}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMenuItems(prev =>
@@ -141,7 +141,7 @@ const MenuView = ({ restaurantId, restaurantName, onClose }) => {
           setError("Authentication token not found. Please log in again.");
           return;
         }
-        await axios.delete(`http://localhost:8001/api/menus/${id}`, {
+        await axios.delete(`http://localhost:8000/api/menus/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMenuItems(prev => prev.filter(item => item._id !== id));

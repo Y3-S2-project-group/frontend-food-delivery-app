@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import MenuAddForm from "./MenuAddForm";
 import MenuView from "./MenuView"; 
+import LogoutButton from "../LogoutButton";
 
 const RestaurantList = ({ isPending }) => {
   const [showViewMenu, setShowViewMenu] = useState(false);
@@ -53,8 +54,8 @@ const RestaurantList = ({ isPending }) => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       const endpoint = isPending
-        ? "http://localhost:8001/api/restaurants/pending"
-        : "http://localhost:8001/api/restaurants/";
+        ? "http://localhost:8000/api/restaurants/pending"
+        : "http://localhost:8000/api/restaurants/";
 
       try {
         // Get token from localStorage
@@ -113,7 +114,7 @@ const RestaurantList = ({ isPending }) => {
           return;
         }
 
-        await axios.delete(`http://localhost:8001/api/restaurants/${id}`, {
+        await axios.delete(`http://localhost:8000/api/restaurants/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -227,7 +228,7 @@ const RestaurantList = ({ isPending }) => {
       }
 
       const response = await axios.put(
-        `http://localhost:8001/api/restaurants/${selectedRestaurant._id}`,
+        `http://localhost:8000/api/restaurants/${selectedRestaurant._id}`,
         editForm,
         {
           headers: {
@@ -353,6 +354,7 @@ const RestaurantList = ({ isPending }) => {
               <Plus size={18} />
               <span>Add Restaurant</span>
             </button>
+            <LogoutButton />
           </div>
         </div>
 

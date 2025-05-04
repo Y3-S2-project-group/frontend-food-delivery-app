@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ShoppingCart, Search, Star, X, Plus, Minus, AlertTriangle } from 'lucide-react';
 import PlaceOrderForm from '../order/Placeorder.jsx';
 import { useNavigate } from 'react-router-dom';
+import LogoutButton from '../LogoutButton.jsx';
 
 const ShopPage = () => {
   const navigate = useNavigate();
@@ -52,7 +53,12 @@ const ShopPage = () => {
     const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8001/api/restaurants/approved');
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:8000/api/restaurants/approved', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setRestaurants(response.data);
         setFilteredRestaurants(response.data);
         
@@ -78,7 +84,12 @@ const ShopPage = () => {
       
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8001/api/menus/public/restaurant/${selectedRestaurant._id}`);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`http://localhost:8000/api/menus/public/restaurant/${selectedRestaurant._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setMenuItems(response.data);
         setFilteredMenuItems(response.data);
         setLoading(false);
@@ -149,7 +160,12 @@ const ShopPage = () => {
       setLoading(true);
       if (isSearchingMenu) {
         // Search for menu items
-        const response = await axios.get(`http://localhost:8001/api/menus/search?term=${searchTerm}`);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`http://localhost:8000/api/menus/search?term=${searchTerm}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setMenuItems(response.data);
         setFilteredMenuItems(response.data);
         if (response.data.length > 0) {
@@ -157,7 +173,12 @@ const ShopPage = () => {
         }
       } else {
         // Search for restaurants
-        const response = await axios.get(`http://localhost:8001/api/restaurants/search?term=${searchTerm}`);
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`http://localhost:8000/api/restaurants/search?term=${searchTerm}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setRestaurants(response.data);
         setFilteredRestaurants(response.data);
         setSelectedRestaurant(null);
@@ -303,6 +324,7 @@ const ShopPage = () => {
             </span>
           )}
         </button>
+        <LogoutButton />
       </div>
 
       {/* Simple filtering options based on context */}

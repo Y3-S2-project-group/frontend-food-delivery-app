@@ -16,7 +16,7 @@ const OrdersToConfirm = () => {
                 
                 // Make the request with the token in the Authorization header
                 const response = await axios.get(
-                    `http://localhost:7000/api/confirmed-orders?restaurantId=${restaurantId}`,
+                    `http://localhost:8000/api/confirmed-orders?restaurantId=${restaurantId}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -45,7 +45,11 @@ const OrdersToConfirm = () => {
     return (
         <div className="ml-0 mt-4 p-4 max-w-5xl">
             <h1 className="text-2xl font-bold mb-6">Orders to Confirm</h1>
-            
+            <button
+                onClick={() => navigate('/rList')}
+            >
+                Back to Restaurant List
+            </button>
             {orders.length === 0 ? (
                 <p className="text-gray-500">No orders to confirm at this time.</p>
             ) : (

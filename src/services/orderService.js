@@ -1,7 +1,7 @@
 // src/services/orderService.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7000/api'; // Default if undefined
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'; // Default if undefined
 console.log("API_URL:", API_URL); // Check API_URL value
 
 const getAuthHeader = () => {

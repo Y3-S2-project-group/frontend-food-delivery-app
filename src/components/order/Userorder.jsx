@@ -100,7 +100,7 @@ function UserOrders() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(-1)} // Navigate back to the previous page
+            onClick={() => navigate('/shop')} // Navigate back to the previous page
             className="mb-4"
           >
             Back
@@ -110,7 +110,7 @@ function UserOrders() {
             <div className="text-center py-10">
               <p className="text-gray-500">You don't have any orders yet.</p>
               <Button 
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/shop")}
                 className="mt-4 bg-orange-500 hover:bg-orange-600"
               >
                 Browse Restaurants

@@ -63,7 +63,7 @@ const MenuAddForm = ({ restaurantId, onClose }) => {
       };
 
       await axios.post(
-        "http://localhost:8001/api/menus/",
+        "http://localhost:8000/api/menus/",
         payload,
         {
           headers: {

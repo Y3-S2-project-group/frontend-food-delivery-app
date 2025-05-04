@@ -26,6 +26,7 @@ export function OrderConfirmation() {
   const fetchOrderDetails = async () => {
     try {
       const response = await getOrderDetails(orderId);
+      console.log("Order details response:", response);
       if (response.success && response.data) {
         setOrderDetails(response.data);
       } else {
@@ -44,12 +45,13 @@ export function OrderConfirmation() {
     setIsLoadingDelivery(true);
     try {
       const response = await getDeliveryForOrder(orderId);
+      console.log("Delivery response:", response);
       if (response.success && response.data) {
         setDeliveryDetails(response.data.data);
         
         // If driver is assigned, fetch driver location
-        if (response.data.data.driverId) {
-          await fetchDriverLocation(response.data.data.driverId);
+        if (response.data.driverId) {
+          await fetchDriverLocation(response.data.driverId);
         }
       }
     } catch (err) {
@@ -62,6 +64,7 @@ export function OrderConfirmation() {
   const fetchDriverLocation = async (driverId) => {
     try {
       const response = await getDriverLocation(driverId);
+      console.log("Driver location response:", response);
       
       if (response.success && response.data.data) {
         setDriverLocation(response.data.data.location);
@@ -207,6 +210,8 @@ export function OrderConfirmation() {
     );
   }
 
+  console.log("Order details:", orderDetails?.customerLocation?.coordinates, driverLocation);
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card>
@@ -334,12 +339,18 @@ export function OrderConfirmation() {
                           </div>
                         </div>
                         
-                        {orderDetails?.customerLocation?.coordinates && driverLocation && (
-                          <DeliveryMap 
-                            customerLocation={[orderDetails?.customerLocation?.coordinates[1], orderDetails?.customerLocation?.coordinates[0]]}
-                            driverLocation={driverLocation}
-                          />
-                        )}
+                        {orderDetails?.customerLocation?.coordinates ? (
+                          driverLocation ? (
+                            <DeliveryMap 
+                              customerLocation={[orderDetails?.customerLocation?.coordinates[1], orderDetails?.customerLocation?.coordinates[0]]}
+                              driverLocation={driverLocation}
+                            />
+                          ) : (
+                            <div className="border rounded-md p-4 flex justify-center items-center h-40">
+                              <p>Waiting for driver location...</p>
+                            </div>
+                          )
+                        ) : null}
                       </>
                     ) : (
                       <div className="bg-yellow-50 p-4 rounded-md">
@@ -379,7 +390,7 @@ export function OrderConfirmation() {
               My Orders
             </Button>
             <Button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/shop")}
               className="bg-orange-500 hover:bg-orange-600"
             >
               Back to Home

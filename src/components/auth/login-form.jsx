@@ -34,6 +34,8 @@ export function LoginForm({ className, ...props }) {
         navigate("/shop");
       } else if (user.role === "admin") {
         navigate("/rVerify");
+      } else if (user.role === "delivery-person") {
+        navigate("/driver/deliveries");
       } else {
         navigate("/shop"); 
       }

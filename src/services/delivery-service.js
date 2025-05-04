@@ -1,11 +1,16 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5078/api";
+const API_URL = "http://localhost:8000/api";
 const AUTH_URL = "http://localhost:8000/api/users";
 
 export const getDriverDeliveries = async (driverId) => {
   try {
-    const response = await axios.get(`${API_URL}/deliveries/drivers/${driverId}`);
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/deliveries/drivers/${driverId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Failed to fetch deliveries");
@@ -14,7 +19,11 @@ export const getDriverDeliveries = async (driverId) => {
 
 export const updateDeliveryStatus = async (deliveryId, status) => {
   try {
-    const response = await axios.put(`${API_URL}/deliveries/${deliveryId}/status`, { status });
+    const response = await axios.put(`${API_URL}/deliveries/${deliveryId}/status`, { status }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.message || "Failed to update delivery status");
@@ -23,17 +32,14 @@ export const updateDeliveryStatus = async (deliveryId, status) => {
 
 export const getDeliveryForOrder = async (orderId) => {
   try {
-    const response = await fetch(`${API_URL}/deliveries/order/${orderId}`);
-    const data = await response.json();
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/deliveries/order/${orderId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
     
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch delivery details');
-    }
-    
-    return {
-      success: true,
-      data: data
-    };
   } catch (error) {
     console.error('Error fetching delivery details:', error);
     return {
@@ -47,7 +53,13 @@ export const getDeliveryForOrder = async (orderId) => {
 
 export const getDriverLocation = async (driverId) => {
   try {
-    const response = await fetch(`${AUTH_URL}/drivers/${driverId}`);
+    const response = await fetch(`${AUTH_URL}/drivers/${driverId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
     const data = await response.json();
     
     if (!response.ok) {
